@@ -11,10 +11,10 @@ The dataset is in mmdetection-github/data/spermparsing
 This network is based on the framework of mmdetection.
 
 - SP-Net architecture:
-<p align="center"><img width="90%" src="data/SP-Net.jpg" /></p>
+<p align="center"><img width="90%" src="mmdetection-github/data/SP-Net.jpg" /></p>
 
 - SP-Net output:
-<p align="center"><img width="100%" src="data/result.jpg" /></p>
+<p align="center"><img width="100%" src="mmdetection-github/data/result.jpg" /></p>
 
 ## Installation
 - mmcv.1.6.0
