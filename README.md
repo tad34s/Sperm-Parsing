@@ -5,7 +5,7 @@ In this repository, we release the SP-Net code in Pytorch and the proposed Sperm
 
 The dataset is in mmdetection-github/data/spermparsing.
 
-This network is based on the framework of mmdetection.
+This network is based on the framework of [mmdetection](https://github.com/open-mmlab/mmdetection).
 
 - SP-Net architecture:
 <p align="center"><img width="90%" src="mmdetection-github/data/SP-Net.jpg" /></p>
