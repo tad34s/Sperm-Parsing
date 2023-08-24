@@ -18,7 +18,7 @@ This network is based on the framework of mmdetection.
 - pytorch.1.12.1
 
 ## Results and Models
-**on Sperm Parsing Dataset**
+**On Sperm Parsing Dataset**
 
 |  Backbone  | mIoU |Parsing (APp50/APvol/PCP50) | DOWNLOAD |
 |------------|:----:|:--------------------------:| :-------:|
