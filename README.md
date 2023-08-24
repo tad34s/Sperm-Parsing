@@ -17,11 +17,10 @@ This network is based on the framework of mmdetection.
 - mmcv.1.6.0
 - pytorch.1.12.1
 
-<<<<<<< HEAD
 ## Evaluation
 ```
-python tools/test.py configs/git_fusionrcnn/cascade_mask_rcnn_r101_caffe_feature_blend_coarse_fine_edge_fpn_1x_spermparsingeval.py ./fusion_coarse_to_fine35/epoch_35.pth --eval bbox segm
-=======
+python tools/test.py configs/git_fusionrcnn/cascade_mask_rcnn_r101_caffe_feature_blend_coarse_fine_edge_fpn_1x_spermparsingeval.py epoch_35.pth --eval bbox segm
+
 ## Results and Models
 **on Sperm Parsing Dataset**
 
@@ -33,5 +32,4 @@ python tools/test.py configs/git_fusionrcnn/cascade_mask_rcnn_r101_caffe_feature
 ## Evaluation
 ```
 python tools/test.py configs/git_fusionrcnn/cascade_mask_rcnn_r101_caffe_feature_blend_coarse_fine_edge_fpn_1x_spermparsingeval.py epoch_35.pth --eval bbox segm
->>>>>>> 3f0537d (提交文件)
 ```
