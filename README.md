@@ -11,15 +11,11 @@ This network is based on the framework of mmdetection.
 <p align="center"><img width="90%" src="mmdetection-github/data/SP-Net.jpg" /></p>
 
 - SP-Net output:
-<p align="center"><img width="100%" src="mmdetection-github/data/result.jpg" /></p>
+<p align="center"><img width="90%" src="mmdetection-github/data/result.jpg" /></p>
 
 ## Installation
 - mmcv.1.6.0
 - pytorch.1.12.1
-
-## Evaluation
-```
-python tools/test.py configs/git_fusionrcnn/cascade_mask_rcnn_r101_caffe_feature_blend_coarse_fine_edge_fpn_1x_spermparsingeval.py epoch_35.pth --eval bbox segm
 
 ## Results and Models
 **on Sperm Parsing Dataset**
