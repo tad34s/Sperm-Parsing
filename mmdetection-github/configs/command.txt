@@ -1,0 +1,10 @@
+python tools/train.py  configs/mask_rcnn/mask_rcnn_r50_caffe_fpn_mstrain-poly_1x_sperm.py --work-dir ./weights
+python tools/train.py configs/mask_rcnn/mask_rcnn_r101_caffe_fpn_1x_sperm.py  --work-dir ./weights --gpu-id 2
+python tools/test.py configs/mask_rcnn/mask_rcnn_r50_caffe_fpn_mstrain-poly_1x_sperm.py weights/latest.pth --eval bbox segm
+python demo/image_demo.py demo/83.jpg configs/mask_rcnn/mask_rcnn_r50_caffe_fpn_mstrain-poly_1x_sperm.py weights/latest.pth
+
+mmdetection-master\mmdetection-master\configs\mask_rcnn\mask_rcnn_r50_caffe_fpn_mstrain-poly_1x_sperm.py 配置文件
+				               \configs\mask_rcnn\mask_rcnn_r50_caffe_fpn_mstrain-poly_1x_sperm100x.py
+						   \configs\cascade_rcnn\cascade_mask_rcnn_r50_caffe_fpn_1x_sperm.py
+					         \configs\mask_rcnn\cascade_mask_rcnn_r50_caffe_fpn_mstrain-poly_1x_sperm100x.py
+							     \mask_rcnn\mask_rcnn_r101_caffe_feature_blend_detach_attention_edge_fpn_1x_sperm100x.py
