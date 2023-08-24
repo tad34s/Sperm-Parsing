@@ -3,9 +3,9 @@ Official implementation of **Sperm Parsing Net: Instance-Aware Part Segmentation
 
 In this repository, we release the SP-Net code in Pytorch and the proposed Sperm Parsing Dataset
 
-The dataset is in mmdetection-github/data/spermparsing.
+The dataset is in mmdetection-github/data/spermparsing
 
-This network is based on the framework of [mmdetection](https://github.com/open-mmlab/mmdetection).
+This network is based on the framework of [mmdetection](https://github.com/open-mmlab/mmdetection)
 
 - SP-Net architecture:
 <p align="center"><img width="90%" src="mmdetection-github/data/SP-Net.jpg" /></p>
