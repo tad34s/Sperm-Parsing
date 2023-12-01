@@ -1,16 +1,16 @@
-# Sperm-Parsing
-Official implementation of **Sperm Parsing Net: Instance-Aware Part Segmentation of Human Sperm**
+# Cell-Parsing
+Official implementation of **CP-Net: Instance-Aware Part Segmentation Network for Biological Cell Parsing**
 
-In this repository, we release the SP-Net code in Pytorch and the proposed Sperm Parsing Dataset
+In this repository, we release the CP-Net code in Pytorch and the proposed Sperm Parsing Dataset
 
 The dataset is in mmdetection-github/data/spermparsing
 
 This network is based on the framework of [mmdetection](https://github.com/open-mmlab/mmdetection)
 
-- SP-Net architecture:
+- CP-Net architecture:
 <p align="center"><img width="90%" src="mmdetection-github/data/SP-Net.jpg" /></p>
 
-- SP-Net output:
+- CP-Net output:
 <p align="center"><img width="90%" src="mmdetection-github/data/result.jpg" /></p>
 
 ## Installation
