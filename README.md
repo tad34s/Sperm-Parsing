@@ -7,10 +7,15 @@ The dataset is in mmdetection-github/data/spermparsing
 
 This network is based on the framework of [mmdetection](https://github.com/open-mmlab/mmdetection)
 
-- CP-Net architecture:
+<hr />
+
+> **Abstract:** *Instance segmentation of biological cells is important in medical image analysis for identifying and segmenting individual cells, and quantitative measurement of subcellular structures requires further cell-level subcellular part segmentation. Subcellular structure measurements are critical for cell phenotyping and quality analysis. For these purposes, instance-aware part segmentation network is first introduced to distinguish individual cells and segment subcellular structures for each detected cell. This approach is demonstrated on human sperm cells since the World Health Organization has established quantitative standards for sperm quality assessment. Specifically, a novel Cell Parsing Net (CP-Net) is proposed for accurate instance-level cell parsing. An attention-based feature fusion module is designed to alleviate contour misalignments for cells with an irregular shape by using instance masks as spatial cues instead of as strict constraints to differentiate various instances. A coarse-to-fine segmentation module is developed to effectively segment tiny subcellular structures within a cell through hierarchical segmentation from whole to part instead of directly segmenting each cell part. Moreover, a sperm parsing dataset is built including 320 annotated sperm images with five semantic subcellular part labels. Extensive experiments on the collected dataset demonstrate that the proposed CP-Net outperforms state-of-the-art instance-aware part segmentation networks.* 
+<hr />
+
+## Netword architecture:
 <p align="center"><img width="90%" src="mmdetection-github/data/SP-Net.jpg" /></p>
 
-- CP-Net output:
+## Sample output:
 <p align="center"><img width="90%" src="mmdetection-github/data/result.jpg" /></p>
 
 ## Installation
