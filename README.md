@@ -13,7 +13,7 @@ This network is based on the framework of [mmdetection](https://github.com/open-
 <hr />
 
 ## Netword architecture:
-<p align="center"><img width="90%" src="mmdetection-github/data/SP-Net.jpg" /></p>
+<p align="center"><img width="90%" src="mmdetection-github/data/CP-Net.jpg" /></p>
 
 ## Sample output:
 <p align="center"><img width="90%" src="mmdetection-github/data/result.jpg" /></p>
