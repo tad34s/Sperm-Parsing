@@ -20,10 +20,10 @@ This network is based on the framework of [mmdetection](https://github.com/open-
 ## Results and Models
 **On Sperm Parsing Dataset**
 
-Methods      |  Backbone  | mIoU |Parsing (APp50/APvol/PCP50) | DOWNLOAD |
-             |------------|:----:|:--------------------------:| :-------:|
-CP-Net-light |  R-50-FPN  | 70.4 |      59.5/78.3/70.1        |          |
-CP-Net       |  R-101-FPN | 70.6 |      61.5/83.3/72.5        | [GoogleDrive](https://drive.google.com/file/d/1bFhdgD3SrSB7gvvRKnx_sX_KjFaf85q_/view?usp=drive_link)|
+|Methods      |  Backbone  | mIoU |Parsing (APp50/APvol/PCP50) | DOWNLOAD |
+|-------------|------------|:----:|:--------------------------:| :-------:|
+|CP-Net-light |  R-50-FPN  | 70.4 |      59.5/78.3/70.1        |          |
+|CP-Net       |  R-101-FPN | 70.6 |      61.5/83.3/72.5        | [GoogleDrive](https://drive.google.com/file/d/1bFhdgD3SrSB7gvvRKnx_sX_KjFaf85q_/view?usp=drive_link)|
 
 ## Evaluation
 ```
