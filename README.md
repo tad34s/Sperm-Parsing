@@ -5,8 +5,6 @@ In this repository, we release the CP-Net code in Pytorch and the proposed Sperm
 
 The dataset is in mmdetection-github/data/spermparsing
 
-This network is based on the framework of [mmdetection](https://github.com/open-mmlab/mmdetection)
-
 <hr />
 
 > **Abstract:** *Instance segmentation of biological cells is important in medical image analysis for identifying and segmenting individual cells, and quantitative measurement of subcellular structures requires further cell-level subcellular part segmentation. Subcellular structure measurements are critical for cell phenotyping and quality analysis. For these purposes, instance-aware part segmentation network is first introduced to distinguish individual cells and segment subcellular structures for each detected cell. This approach is demonstrated on human sperm cells since the World Health Organization has established quantitative standards for sperm quality assessment. Specifically, a novel Cell Parsing Net (CP-Net) is proposed for accurate instance-level cell parsing. An attention-based feature fusion module is designed to alleviate contour misalignments for cells with an irregular shape by using instance masks as spatial cues instead of as strict constraints to differentiate various instances. A coarse-to-fine segmentation module is developed to effectively segment tiny subcellular structures within a cell through hierarchical segmentation from whole to part instead of directly segmenting each cell part. Moreover, a sperm parsing dataset is built including 320 annotated sperm images with five semantic subcellular part labels. Extensive experiments on the collected dataset demonstrate that the proposed CP-Net outperforms state-of-the-art instance-aware part segmentation networks.* 
@@ -22,7 +20,7 @@ This network is based on the framework of [mmdetection](https://github.com/open-
 - mmcv.1.6.0
 - pytorch.1.12.1
 
-## Results and Models
+## Results and models
 **On Sperm Parsing Dataset**
 
 |Methods      |  Backbone  | mIoU |Parsing (APp50/APvol/PCP50) | DOWNLOAD |
@@ -34,3 +32,9 @@ This network is based on the framework of [mmdetection](https://github.com/open-
 ```
 python tools/test.py configs/git_fusionrcnn/cascade_mask_rcnn_r101_caffe_feature_blend_coarse_fine_edge_fpn_1x_spermparsingeval.py epoch_35.pth --eval bbox segm
 ```
+
+## Contact
+Should you have any question, please contact chenwy.chen@mail.utoronto.ca
+
+
+**Acknowledgment:** This code is based on the [mmdetection](https://github.com/open-mmlab/mmdetection) toolbox. 

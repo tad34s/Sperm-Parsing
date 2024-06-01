@@ -1,17 +1,4 @@
-from .part_segmentation_haed import PartSegmentationHead
-from .part_segmentation_haed_1 import PartSegmentationHead1
-from .part_segmentation_haed_detach_edge import PartSegmentationHeadDetachEdge
-from .part_segmentation_haed_detach_attention_edge import PartSegmentationHeadDetachAttentionEdge
-from .part_segmentation_haed_detach_ASPP import PartSegmentationHeadDetachASPP
-from .part_segmentation_haed_detach_instance import PartSegmentationHeadDetachInstance
-from .part_segmentation_haed_detach_attention_edge_double import PartSegmentationHeadDetachAttentionEdgeDouble
-from .fusion_head_detach import FusionHeadDetach
-from .fusion_head_detach_attention_ASPP import FusionHeadAttentionASPP
 from .fcn_mask_head_detach import FCNMaskHeadDetach
-from .fusion_head_detach_attention_edge import FusionHeadAttentionEdge
-from .fusion_head_detach_additive_attention_edge import FusionHeadAdditiveAttentionEdge
-from .fusion_head_detach_attention_instance import FusionHeadAttentionInstance
 __all__ = [
-    'PartSegmentationHead', 'PartSegmentationHead1', 'PartSegmentationHeadDetachEdge', 'PartSegmentationHeadDetachAttentionEdge', 'PartSegmentationHeadDetachInstance', 'PartSegmentationHeadDetachAttentionEdgeDouble',
-    'PartSegmentationHeadDetachASPP', 'FusionHeadDetach', 'FusionHeadAttentionASPP', 'FusionHeadAttentionEdge', 'FusionHeadAttentionInstance', 'FusionHeadAdditiveAttentionEdge'
+    'FCNMaskHeadDetach'
 ]
