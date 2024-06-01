@@ -37,4 +37,4 @@ python tools/test.py configs/git_fusionrcnn/cascade_mask_rcnn_r101_caffe_feature
 Should you have any question, please contact chenwy.chen@mail.utoronto.ca
 
 
-**Acknowledgment:** This code is based on the [mmdetection](https://github.com/open-mmlab/mmdetection) toolbox. 
+**Acknowledgment:** This code is based on the [mmdetection](https://github.com/open-mmlab/mmdetection) toolbox
