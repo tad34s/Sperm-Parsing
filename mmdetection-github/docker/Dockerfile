@@ -21,8 +21,7 @@ RUN pip install --no-cache-dir mmcv-full==1.6.0 -f https://download.openmmlab.co
 
 # Install MMDetection
 RUN conda clean --all
-RUN git clone git@github.com:tad34s/Sperm-Parsing.git /sperm 
-RUN mv /sperm/README.md /sperm/mmdetection-github/README.md
+RUN git clone https://github.com/tad34s/Sperm-Parsing.git
 WORKDIR /sperm/mmdetection-github
 # move epoch_35.pth to workdir
 COPY epoch_35.pth .
