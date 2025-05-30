@@ -1,8 +1,9 @@
-ARG PYTORCH="1.6.0"
-ARG CUDA="10.1"
-ARG CUDNN="7"
+ARG PYTORCH="1.9.0"
+ARG CUDA="11.1"
+ARG CUDNN="8"
 
 FROM pytorch/pytorch:${PYTORCH}-cuda${CUDA}-cudnn${CUDNN}-devel
+
 
 ENV TORCH_CUDA_ARCH_LIST="6.0 6.1 7.0+PTX"
 ENV TORCH_NVCC_FLAGS="-Xfatbin -compress-all"
@@ -16,18 +17,22 @@ RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys A4B469963BF863CC F6
     rm -rf /var/lib/apt/lists/*
 
 # Install MMCV
+
+RUN pip install gdown
+
 RUN pip install --no-cache-dir --upgrade pip wheel setuptools
-RUN pip install --no-cache-dir mmcv-full==1.6.0 -f https://download.openmmlab.com/mmcv/dist/cu101/torch1.6.0/index.html
+RUN pip install --no-cache-dir mmcv-full==1.6.0 -f https://download.openmmlab.com/mmcv/dist/cu101/torch1.11.0/index.html
 
 # Install MMDetection
 RUN conda clean --all
-RUN git clone https://github.com/tad34s/Sperm-Parsing.git
+RUN git clone https://github.com/tad34s/Sperm-Parsing.git /sperm
 WORKDIR /sperm/mmdetection-github
 # move epoch_35.pth to workdir
-COPY epoch_35.pth .
+RUN gdown 1bFhdgD3SrSB7gvvRKnx_sX_KjFaf85q_
 
-ENV FORCE_CUDA="1"
+ENV FORCE_CUDA="0"
 RUN pip install --no-cache-dir -r requirements/build.txt
 RUN pip install --no-cache-dir -e .
 
-RUN python tools/test.py configs/git_fusionrcnn/cascade_mask_rcnn_r101_caffe_feature_blend_coarse_fine_edge_fpn_1x_spermparsingeval.py epoch_35.pth --eval bbox segm
+# REMOVE or COMMENT OUT THIS LINE:
+# RUN python tools/test.py configs/git_fusionrcnn/cascade_mask_rcnn_r101_caffe_feature_blend_coarse_fine_edge_fpn_1x_spermparsingeval.py epoch_35.pth --eval bbox segm
