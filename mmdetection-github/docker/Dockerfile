@@ -20,6 +20,9 @@ RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys A4B469963BF863CC F6
 
 RUN pip install gdown
 
+ENV FORCE_CUDA="1"
+ENV MMCV_WITH_OPS=1
+
 RUN pip install --no-cache-dir --upgrade pip wheel setuptools
 RUN pip install --no-cache-dir mmcv-full==1.6.0 -f https://download.openmmlab.com/mmcv/dist/cu101/torch1.11.0/index.html
 
@@ -30,7 +33,6 @@ WORKDIR /sperm/mmdetection-github
 # move epoch_35.pth to workdir
 RUN gdown 1bFhdgD3SrSB7gvvRKnx_sX_KjFaf85q_
 
-ENV FORCE_CUDA="0"
 RUN pip install --no-cache-dir -r requirements/build.txt
 RUN pip install --no-cache-dir -e .
 
