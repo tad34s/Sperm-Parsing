@@ -523,6 +523,8 @@ class BaseDetector(BaseModule, metaclass=ABCMeta):
         # draw segmentation masks
         # pdb.set_trace()
         for i in range(0, 5):
+            if i >= len(segm_result):
+                continue
             if segm_result[i] is not None and len(labels) > 0:  # non empty
                 if isinstance(segm_result[i][0], torch.Tensor):
                     segm_result[i] = (
