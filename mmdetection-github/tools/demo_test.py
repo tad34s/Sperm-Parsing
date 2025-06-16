@@ -44,16 +44,17 @@ def main(args):
     # pdb.set_trace()
     result = inference_detector(model, args.img)
     # show the results
-    # show_result_pyplot(
-    #    model,
-    #    args.img,
-    #    result,
-    #    palette=args.palette,
-    #    score_thr=args.score_thr,
-    #    out_file=args.out_file)
-    show_result_pyplot_part100x(
-        model, args.img, result, palette=args.palette, score_thr=args.score_thr
+    show_result_pyplot(
+        model,
+        args.img,
+        result,
+        palette=args.palette,
+        score_thr=args.score_thr,
+        out_file=args.out_file,
     )
+    # show_result_pyplot_part100x(
+    #     model, args.img, result, palette=args.palette, score_thr=args.score_thr
+    # )
 
 
 async def async_main(args):
