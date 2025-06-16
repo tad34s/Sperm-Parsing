@@ -32,7 +32,7 @@ def test_image(
     # Visualize and optionally save the result
     print(f"Testing image: {image_path}")
     if output_path:
-        model.show_result(image_path, result, out_file=output_path)
+        model.show_result(image_path, result, out_file=output_path, show_mask=False)
         print(f"Result saved to: {output_path}")
     else:
         model.show_result(image_path, result, score_thr=0.5)
