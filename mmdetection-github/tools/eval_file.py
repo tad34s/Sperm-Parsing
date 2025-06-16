@@ -4,10 +4,8 @@ import mmcv
 # Paths to your configuration file and pretrained weights
 CONFIG_FILE = "configs/git_fusionrcnn/cascade_mask_rcnn_r101_caffe_feature_blend_coarse_fine_edge_fpn_1x_spermparsingeval.py"  # Replace with the actual path to your config file
 CHECKPOINT_FILE = "epoch_35.pth"  # Replace with the actual path to your .pth file
-IMAGE_PATH = "/data/eval/image.jpg"  # Path to the image you want to test
-OUTPUT_PATH = (
-    "/data/eval/output.jpg"  # Path to save the visualization result (optional)
-)
+IMAGE_PATH = "data/eval/image.jpg"  # Path to the image you want to test
+OUTPUT_PATH = "data/eval/output.jpg"  # Path to save the visualization result (optional)
 
 
 def test_image(
