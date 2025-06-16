@@ -255,6 +255,7 @@ def imshow_det_bboxes(
     Returns:
         ndarray: The image with bboxes drawn on it.
     """
+    print("\nwhat\n\n\n\n")
     print("segms\n", segms, "\nlabels:\n", labels)
 
     assert bboxes is None or bboxes.ndim == 2, (
