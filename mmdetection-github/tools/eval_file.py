@@ -30,12 +30,12 @@ def test_image(
     # Visualize and optionally save the result using imshow_det_bboxes_part100x
     print(f"Testing image: {image_path}")
     if output_path:
-        model.imshow_det_bboxes_part100x(
+        model.show_result_part100x(
             image_path, result, score_thr=0.5, out_file=output_path
         )
         print(f"Result saved to: {output_path}")
     else:
-        model.imshow_det_bboxes_part100x(image_path, result, score_thr=0.5)
+        model.show_result_part100x(image_path, result, score_thr=0.5)
         print("Result visualized.")
 
 
