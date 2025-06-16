@@ -348,7 +348,7 @@ class BaseDetector(BaseModule, metaclass=ABCMeta):
         if out_file is not None:
             show = False
         # draw bounding boxes
-        print("segments:", segms, "labels", labels, sep="\n")
+        print("segments:", segms.shape, "labels", labels.shape, sep="\n")
         img = imshow_det_bboxes(
             img,
             bboxes,
