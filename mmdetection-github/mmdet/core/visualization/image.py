@@ -437,6 +437,7 @@ def imshow_det_bboxes_part(
     """
     assert bboxes.ndim == 2, f" bboxes ndim should be 2, but its ndim is {bboxes.ndim}."
     assert labels.ndim == 1, f" labels ndim should be 1, but its ndim is {labels.ndim}."
+    print("segms\n", segms, "\nlabels:\n", labels)
     assert bboxes.shape[0] == labels.shape[0], (
         "bboxes.shape[0] and labels.shape[0] should have the same length."
     )
@@ -596,6 +597,7 @@ def imshow_det_bboxes_part100x(
     """
     assert bboxes.ndim == 2, f" bboxes ndim should be 2, but its ndim is {bboxes.ndim}."
     assert labels.ndim == 1, f" labels ndim should be 1, but its ndim is {labels.ndim}."
+    print("segms\n", segms, "\nlabels:\n", labels)
     assert bboxes.shape[0] == labels.shape[0], (
         "bboxes.shape[0] and labels.shape[0] should have the same length."
     )
