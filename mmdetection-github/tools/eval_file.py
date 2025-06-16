@@ -1,11 +1,35 @@
 from mmdet.apis import init_detector, inference_detector
 import mmcv
+import numpy as np
 
 # Paths to your configuration file and pretrained weights
 CONFIG_FILE = "configs/git_fusionrcnn/cascade_mask_rcnn_r101_caffe_feature_blend_coarse_fine_edge_fpn_1x_spermparsingeval.py"  # Replace with the actual path to your config file
 CHECKPOINT_FILE = "epoch_35.pth"  # Replace with the actual path to your .pth file
 IMAGE_PATH = "data/eval/image.jpg"  # Path to the image you want to test
 OUTPUT_PATH = "data/eval/output.jpg"  # Path to save the visualization result (optional)
+
+
+def visualize_segments(image, bboxes, segms, palette):
+    """
+    Visualize all segments for each bounding box.
+
+    Args:
+        image (str): Path to the input image.
+        bboxes (np.ndarray): Bounding boxes.
+        segms (list): List of masks for each segment.
+        palette (list): List of colors for visualization.
+
+    Returns:
+        np.ndarray: Image with visualized segments.
+    """
+    img = mmcv.imread(image).astype(np.uint8)
+    for i, bbox in enumerate(bboxes):
+        if i < len(segms):  # Ensure index is within bounds
+            for j, mask in enumerate(segms[i]):
+                color_mask = palette[j % len(palette)]
+                mask = mask.astype(bool)
+                img[mask] = img[mask] * 0.5 + np.array(color_mask, dtype=np.uint8) * 0.5
+    return img
 
 
 def test_image(
@@ -27,13 +51,22 @@ def test_image(
     # Perform inference on the image
     result = inference_detector(model, image_path)
 
-    # Visualize and optionally save the result
-    print(f"Testing image: {image_path}")
+    # Extract bounding boxes and segmentation masks
+    bboxes = result[0]
+    segms = result[1]
+
+    # Define palette for visualization
+    palette = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0), (255, 0, 255)]
+
+    # Visualize all segments
+    img_with_segments = visualize_segments(image_path, bboxes, segms, palette)
+
+    # Save or show the result
     if output_path:
-        model.show_result(image_path, result, out_file=output_path)
+        mmcv.imwrite(img_with_segments, output_path)
         print(f"Result saved to: {output_path}")
     else:
-        model.show_result(image_path, result, score_thr=0.5)
+        mmcv.imshow(img_with_segments)
         print("Result visualized.")
 
 
