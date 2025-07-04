@@ -1,8 +1,8 @@
 import json
-import shutil
 from pathlib import Path
 
 import cv2
+import numpy as np
 
 
 def post_processing(image):
@@ -40,21 +40,84 @@ def post_processing(image):
     return image
 
 
+def construct_bbox(
+    segmentation_vacuole: list,
+    segmentation_acrosome: list,
+    segmentation_nucleus: list,
+    segmentation_midpiece: list,
+) -> tuple[list[float], float]:
+    max_x = float("-inf")
+    max_y = float("-inf")
+    min_x = float("inf")
+    min_y = float("inf")
+
+    area = 0.0
+
+    def PolyArea(x, y):
+        return 0.5 * np.abs(np.dot(x, np.roll(y, 1)) - np.dot(y, np.roll(x, 1)))
+
+    for piece_segm in [
+        segmentation_vacuole,
+        segmentation_acrosome,
+        segmentation_nucleus,
+        segmentation_midpiece,
+    ]:
+        for poly in piece_segm:
+            if piece_segm is None:
+                continue
+            x_cords = poly[::2]
+            y_cords = poly[1::2]
+
+            max_x = max(x_cords + [max_x])
+            max_y = max(y_cords + [max_y])
+            min_x = min(x_cords + [min_x])
+            min_y = min(y_cords + [min_y])
+            area += PolyArea(x_cords, y_cords)
+
+    return [
+        min_x,
+        min_y,
+        max_x - min_x,
+        max_y - min_y,
+    ], area
+
+
+def delete_tail(annotation: dict) -> dict:
+    segmentation_vacuole = annotation["segmentation_vacuole"]
+    segmentation_acrosome = annotation["segmentation_acrosome"]
+    segmentation_nucleus = annotation["segmentation_nucleus"]
+    segmentation_midpiece = annotation["segmentation_midpiece"]
+    area = annotation["area"]
+    bbox = annotation["bbox"]
+
+    output = annotation.copy()
+
+    bbox, area = construct_bbox(
+        segmentation_vacuole,
+        segmentation_acrosome,
+        segmentation_nucleus,
+        segmentation_midpiece,
+    )
+    output["segmentation_tail"] = []
+    output["area"] = area
+    output["bbox"] = bbox
+
+    return output
+
+
 def prepare_annotation(src: Path, dest: Path) -> None:
     with src.open("r") as f:
-        annotation = json.load(f)
-    shapes = annotation["shapes"]
+        annotations_file = json.load(f)
+    annotations = annotations_file["annotations"]
 
-    filtered_shapes = []
-    for shape in shapes:
-        if shape["label"] == "Tail":
-            continue
-        filtered_shapes.append(shape)
+    altered_annotations = []
+    for annotation in annotations:
+        altered_annotations.append(delete_tail(annotation))
 
-    annotation["shapes"] = filtered_shapes
+    annotations_file["annotations"] = altered_annotations
 
     with dest.open("w") as f:
-        json.dump(annotation, fp=f)
+        json.dump(annotations_file, fp=f)
 
 
 def prepare_image(src: Path, dest: Path) -> None:
@@ -64,13 +127,14 @@ def prepare_image(src: Path, dest: Path) -> None:
 
 
 def prepare_dataset(dir_src: Path, dir_dest: Path) -> None:
-    shutil.copytree(dir_src, dir_dest)
-    dir_images = dir_dest / "JPEGImages"
+    dir_images = dir_src / "JPEGImages"
     for file in dir_images.glob("*.jpg"):
-        prepare_image(file, file)
+        relative = file.relative_to(dir_src)
+        dest_image = dir_dest / relative
+        dest_image.parent.mkdir(exist_ok=True, parents=True)
+        prepare_image(file, dest_image)
 
-    for file in dir_images.glob("*.json"):
-        prepare_annotation(file, file)
+    prepare_annotation(dir_src / "annotations.json", dir_dest / "annotations.json")
 
 
 if __name__ == "__main__":
