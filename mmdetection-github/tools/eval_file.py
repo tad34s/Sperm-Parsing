@@ -1,5 +1,7 @@
-from mmdet.apis import init_detector, inference_detector
-import mmcv
+import argparse
+
+import numpy as np
+from mmdet.apis import inference_detector, init_detector
 
 # Paths to your configuration file and pretrained weights
 CONFIG_FILE = "configs/git_fusionrcnn/cascade_mask_rcnn_r101_caffe_feature_blend_coarse_fine_edge_fpn_1x_spermparsingeval.py"  # Replace with the actual path to your config file
@@ -21,23 +23,42 @@ def test_image(
         output_path (str, optional): Path to save the visualized result. Defaults to None.
         device (str): Device to run the model on ('cuda:0' for GPU or 'cpu'). Defaults to 'cuda:0'.
     """
-    # Initialize the model
+    print(f"Testing image: {image_path}")
     model = init_detector(config_file, checkpoint_file, device=device)
-
-    # Perform inference on the image
     result = inference_detector(model, image_path)
 
-    # Visualize and optionally save the result using imshow_det_bboxes_part100x
-    print(f"Testing image: {image_path}")
-    if output_path:
-        model.show_result_part100x(
-            image_path, result, score_thr=0.5, out_file=output_path
-        )
-        print(f"Result saved to: {output_path}")
+    if isinstance(result, tuple):
+        bbox_result, segm_result = result
+        if isinstance(segm_result, tuple):
+            segm_result = segm_result[0]
     else:
-        model.show_result_part100x(image_path, result, score_thr=0.5)
-        print("Result visualized.")
+        bbox_result, segm_result = result, None
+
+    bboxes = np.vstack(bbox_result)
+    np.save("bboxes.npy", bboxes)
+
+    model.show_result_part100x(image_path, result, score_thr=0.5, out_file=output_path)
+    print(f"Result saved to: {output_path}")
 
 
-# Run the testing function
-test_image(CONFIG_FILE, CHECKPOINT_FILE, IMAGE_PATH, OUTPUT_PATH)
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Run object detection inference")
+    parser.add_argument("--config", required=True, help="Path to config file")
+    parser.add_argument("--checkpoint", required=True, help="Path to checkpoint file")
+    parser.add_argument("--image", required=True, help="Path to input image")
+    parser.add_argument(
+        "--output", default=None, help="Path to save output image (optional)"
+    )
+    parser.add_argument(
+        "--device", default="cuda:0", help='Device to use ("cuda:0" or "cpu")'
+    )
+
+    args = parser.parse_args()
+
+    test_image(
+        config_file=args.config,
+        checkpoint_file=args.checkpoint,
+        image_path=args.image,
+        output_path=args.output,
+        device=args.device,
+    )
