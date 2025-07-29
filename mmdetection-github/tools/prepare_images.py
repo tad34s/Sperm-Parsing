@@ -5,7 +5,50 @@ import cv2
 import numpy as np
 
 
+def adjust_background_brightness(image, target_bg=200, percentile=90):
+    """
+    Adjusts bright background regions to a target brightness level.
+
+    Args:
+        image: Input image (BGR color or grayscale)
+        target_bg: Target brightness value (0-255) for background
+        percentile: Percentile value to identify bright regions
+
+    Returns:
+        Adjusted image
+    """
+    if image.ndim == 3:
+        hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+        v_channel = hsv[:, :, 2].astype(np.float32)
+    else:
+        v_channel = image.astype(np.float32)
+
+    # calculate brightness thresholds
+    p_low = np.percentile(v_channel, percentile)  # brightness threshold
+    p_high = np.percentile(v_channel, 100)  # maximum brightness
+
+    # avoid adjustment if no bright pixels
+    if p_high <= p_low:
+        return image.copy()
+
+    # create mask for bright regions
+    mask = v_channel > p_low
+
+    adjusted_v = np.where(mask, target_bg, v_channel)
+    adjusted_v = np.clip(adjusted_v, 0, 255).astype(np.uint8)
+
+    # merge back to original image
+    if image.ndim == 3:
+        hsv[:, :, 2] = adjusted_v
+        result = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
+    else:
+        result = adjusted_v
+
+    return result
+
+
 def post_processing(image):
+    image = adjust_background_brightness(image, percentile=10)
     image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     cv2.normalize(image, image, 0, 255, cv2.NORM_MINMAX)
     # sharpen
@@ -19,12 +62,6 @@ def post_processing(image):
     new_width = int(new_height * aspect_ratio)
     image = cv2.resize(image, (new_width, new_height), interpolation=cv2.INTER_AREA)
 
-    # add noise
-    # mean = 0
-    # stddev = 5
-    # noise = np.random.normal(mean, stddev, image.shape).astype(np.uint8)
-    # image = cv2.add(image, noise)
-
     # blur
     image = cv2.GaussianBlur(image, (5, 5), 5)
     # resize back to normal
@@ -35,10 +72,8 @@ def post_processing(image):
     )
 
     # image = cv2.adaptiveThreshold(
-    #     image, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2
+    #     image, 255, cv2.THRESH_OTSU, cv2.THRESH_BINARY, 11, 2
     # )
-    #
-    _, image = cv2.threshold(image, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
 
     return image
 
