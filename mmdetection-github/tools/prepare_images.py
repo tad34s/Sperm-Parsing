@@ -62,6 +62,9 @@ def post_processing(image):
     cv2.normalize(image, image, 0, 255, cv2.NORM_MINMAX)
     image = adjust_background_brightness(image, target_bg=255, percentile=5)
     # blur
+    kernel = np.ones((3, 3))
+    image = cv2.dilate(image, kernel)
+
     image = cv2.GaussianBlur(image, (3, 3), 1.0)
 
     # resize back to normal
@@ -70,7 +73,6 @@ def post_processing(image):
         (original_width, original_height),
         interpolation=cv2.INTER_AREA,
     )
-
     return image
 
 
