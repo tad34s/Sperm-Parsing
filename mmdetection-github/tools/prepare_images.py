@@ -52,7 +52,7 @@ def adjust_background_brightness(image, target_bg, percentile=90):
 
 def post_processing(image):
     # resize
-    new_height = 140
+    new_height = 350
     original_height, original_width = image.shape[:2]
     aspect_ratio = original_width / original_height
     new_width = int(new_height * aspect_ratio)
@@ -62,10 +62,10 @@ def post_processing(image):
     cv2.normalize(image, image, 0, 255, cv2.NORM_MINMAX)
     image = adjust_background_brightness(image, target_bg=255, percentile=5)
     # blur
+    image = cv2.GaussianBlur(image, (5, 5), 1.0)
+
     kernel = np.ones((3, 3))
     image = cv2.dilate(image, kernel)
-
-    image = cv2.GaussianBlur(image, (3, 3), 1.0)
 
     # resize back to normal
     image = cv2.resize(
@@ -73,6 +73,7 @@ def post_processing(image):
         (original_width, original_height),
         interpolation=cv2.INTER_AREA,
     )
+
     return image
 
 
