@@ -50,6 +50,33 @@ def adjust_background_brightness(image, target_bg, percentile=90):
     return result
 
 
+def adjust_dark_spots(image, threshold=130, factor=0.70):
+    """
+    Darkens dark spots (≤ threshold) in a grayscale image with smooth falloff.
+
+    Args:
+        image: Input grayscale image (numpy array)
+        threshold: Pixels ≤ this value will be adjusted (default=80)
+        factor: Darkening strength (0.0-1.0), lower = darker (default=0.92)
+
+    Returns:
+        Adjusted grayscale image
+    """
+    # Create lookup table
+    i = np.arange(256)
+    table = i.copy().astype(np.float32)  # Start with identity mapping
+
+    # Calculate adjustment for pixels ≤ threshold
+    mask = i <= threshold
+    table[mask] = i[mask] * factor
+
+    # Clip, round, and convert to uint8
+    table = np.clip(table, 0, 255)
+    table = np.round(table).astype(np.uint8)
+
+    return cv2.LUT(image, table)
+
+
 def post_processing(image):
     # resize
     new_height = 350
@@ -62,10 +89,11 @@ def post_processing(image):
     cv2.normalize(image, image, 0, 255, cv2.NORM_MINMAX)
     image = adjust_background_brightness(image, target_bg=255, percentile=5)
     # blur
-    image = cv2.GaussianBlur(image, (5, 5), 1.0)
+    image = cv2.GaussianBlur(image, (15, 15), 2.0)
 
     kernel = np.ones((3, 3))
     image = cv2.dilate(image, kernel)
+    image = adjust_dark_spots(image)
 
     # resize back to normal
     image = cv2.resize(
