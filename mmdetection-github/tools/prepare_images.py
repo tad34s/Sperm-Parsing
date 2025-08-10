@@ -78,31 +78,78 @@ def adjust_dark_spots(image, threshold=130, factor=0.70):
 
 
 def post_processing(image):
-    # resize
-    new_height = 350
+    """Returns processed image and scaling factors (width_scale, height_scale)"""
+    # Capture original dimensions
     original_height, original_width = image.shape[:2]
+
+    # Calculate new dimensions
+    new_height = 350
     aspect_ratio = original_width / original_height
     new_width = int(new_height * aspect_ratio)
-    image = cv2.resize(image, (new_width, new_height), interpolation=cv2.INTER_AREA)
 
+    # Resize and get scaling factors
+    image = cv2.resize(image, (new_width, new_height), interpolation=cv2.INTER_AREA)
+    width_scale = new_width / original_width
+    height_scale = new_height / original_height
+
+    # Continue with processing pipeline
     image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     cv2.normalize(image, image, 0, 255, cv2.NORM_MINMAX)
     image = adjust_background_brightness(image, target_bg=255, percentile=5)
-    # blur
     image = cv2.GaussianBlur(image, (15, 15), 2.0)
-
     kernel = np.ones((3, 3))
     image = cv2.dilate(image, kernel)
     image = adjust_dark_spots(image)
 
-    # resize back to normal
-    image = cv2.resize(
-        image,
-        (original_width, original_height),
-        interpolation=cv2.INTER_AREA,
-    )
+    return image, width_scale, height_scale
 
-    return image
+
+def scale_annotation(annotation, width_scale, height_scale):
+    """Scales all coordinates in an annotation while preserving structure"""
+    scaled = annotation.copy()
+
+    # Scale segmentation components
+    for seg_type in ["vacuole", "acrosome", "nucleus", "midpiece", "tail"]:
+        key = f"segmentation_{seg_type}"
+        original_polygons = annotation[key]
+
+        # Handle both empty and non-empty cases
+        if not original_polygons:
+            scaled[key] = []
+            continue
+
+        # Scale each polygon while preserving the flat list structure
+        scaled_polygons = []
+        for poly in original_polygons:
+            if not poly:  # Skip empty polygons
+                continue
+
+            # Scale each coordinate pair
+            scaled_poly = []
+            for i in range(0, len(poly)):
+                # For flat list structure: [x1, y1, x2, y2, ...]
+                if i % 2 == 0:  # x-coordinate
+                    scaled_poly.append(poly[i] * width_scale)
+                else:  # y-coordinate
+                    scaled_poly.append(poly[i] * height_scale)
+            scaled_polygons.append(scaled_poly)
+
+        scaled[key] = scaled_polygons
+
+    # Scale bounding box
+    bbox = annotation["bbox"]
+    scaled_bbox = [
+        bbox[0] * width_scale,
+        bbox[1] * height_scale,
+        bbox[2] * width_scale,
+        bbox[3] * height_scale,
+    ]
+    scaled["bbox"] = scaled_bbox
+
+    # Scale area
+    scaled["area"] = annotation["area"] * width_scale * height_scale
+
+    return scaled
 
 
 def construct_bbox(
@@ -128,16 +175,25 @@ def construct_bbox(
         segmentation_midpiece,
     ]:
         for poly in piece_segm:
-            if piece_segm is None:
+            if not poly:  # Skip empty polygons
                 continue
-            x_cords = poly[::2]
-            y_cords = poly[1::2]
 
-            max_x = max(x_cords + [max_x])
-            max_y = max(y_cords + [max_y])
-            min_x = min(x_cords + [min_x])
-            min_y = min(y_cords + [min_y])
-            area += PolyArea(x_cords, y_cords)
+            # Extract coordinates from flat list format [x1,y1,x2,y2,...]
+            x_coords = []
+            y_coords = []
+            for i in range(0, len(poly), 2):
+                if i + 1 < len(poly):
+                    x_coords.append(poly[i])
+                    y_coords.append(poly[i + 1])
+
+            if not x_coords or not y_coords:
+                continue
+
+            max_x = max(max(x_coords), max_x)
+            max_y = max(max(y_coords), max_y)
+            min_x = min(min(x_coords), min_x)
+            min_y = min(min(y_coords), min_y)
+            area += PolyArea(x_coords, y_coords)
 
     return [
         min_x,
@@ -170,36 +226,66 @@ def delete_tail(annotation: dict) -> dict:
     return output
 
 
-def prepare_annotation(src: Path, dest: Path) -> None:
-    with src.open("r") as f:
-        annotations_file = json.load(f)
-    annotations = annotations_file["annotations"]
-
+def prepare_annotation(
+    annotations_file: dict, dest: Path, scaling_factors: dict
+) -> None:
     altered_annotations = []
-    for annotation in annotations:
-        altered_annotations.append(delete_tail(annotation))
+    for annotation in annotations_file["annotations"]:
+        no_tail = delete_tail(annotation)
+
+        # Apply scaling if factors exist
+        img_id = no_tail["image_id"]
+        if img_id in scaling_factors:
+            width_scale, height_scale = scaling_factors[img_id]
+            scaled = scale_annotation(no_tail, width_scale, height_scale)
+            altered_annotations.append(scaled)
+        else:
+            altered_annotations.append(no_tail)
 
     annotations_file["annotations"] = altered_annotations
+
+    # Update image dimensions in metadata
+    for img in annotations_file["images"]:
+        img_id = img["id"]
+        if img_id in scaling_factors:
+            width_scale, height_scale = scaling_factors[img_id]
+            img["width"] = int(img["width"] * width_scale)
+            img["height"] = int(img["height"] * height_scale)
 
     with dest.open("w") as f:
         json.dump(annotations_file, fp=f)
 
 
-def prepare_image(src: Path, dest: Path) -> None:
+def prepare_image(src: Path, dest: Path) -> tuple[float, float]:
     image = cv2.imread(str(src))
-    final_image = post_processing(image)
+    final_image, width_scale, height_scale = post_processing(image)
     cv2.imwrite(str(dest), final_image)
 
+    # Extract image ID from filename
+    return (width_scale, height_scale)
 
-def prepare_dataset(dir_src: Path, dir_dest: Path) -> None:
-    dir_images = dir_src / "JPEGImages"
-    for file in dir_images.glob("*.jpg"):
-        relative = file.relative_to(dir_src)
-        dest_image = dir_dest / relative
+
+def prepare_dataset(src_dir: Path, dest_dir: Path) -> None:
+    dest_dir.mkdir(exist_ok=True, parents=True)
+    scaling_factors = {}  # {image_id: (width_scale, height_scale)}
+    with (src_dir / "annotations.json").open("r") as f:
+        annotations_file = json.load(f)
+
+    # Process images and collect scaling factors
+    dir_images = src_dir / "JPEGImages"
+    for image_data in annotations_file["images"]:
+        relative = Path(image_data["file_name"])
+        dest_image = dest_dir / relative
         dest_image.parent.mkdir(exist_ok=True, parents=True)
-        prepare_image(file, dest_image)
 
-    prepare_annotation(dir_src / "annotations.json", dir_dest / "annotations.json")
+        factors = prepare_image(src_dir / relative, dest_image)
+        scaling_factors[image_data["id"]] = factors
+
+    prepare_annotation(
+        annotations_file.copy(),
+        dest_dir / "annotations.json",
+        scaling_factors,
+    )
 
 
 if __name__ == "__main__":
@@ -209,4 +295,4 @@ if __name__ == "__main__":
 
     src_image = Path.cwd() / "data" / "eval" / "image3.jpg"
     dest_image = Path.cwd() / "data" / "eval" / "edited_image3.jpg"
-    prepare_image(src_image, dest_image)
+    prepare_image(src_image, dest_image)  # Scaling factors discarded for eval
