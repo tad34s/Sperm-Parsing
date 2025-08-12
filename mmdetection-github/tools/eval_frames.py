@@ -138,8 +138,8 @@ def vizualize_bboxes(bboxes: List[Bbox], frame: Path) -> MatLike:
     for box in bboxes:
         cv2.rectangle(
             img,
-            (box.x_start, box.y_start),
-            (box.x_end, box.y_end),
+            (int(box.x_start), int(box.y_start)),
+            (int(box.x_end), int(box.y_end)),
             color=(255, 0, 0),  # Red in RGB
             thickness=2,
         )
