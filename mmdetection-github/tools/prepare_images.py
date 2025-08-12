@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+from typing import List, Tuple
 
 import cv2
 import numpy as np
@@ -157,7 +158,7 @@ def construct_bbox(
     segmentation_acrosome: list,
     segmentation_nucleus: list,
     segmentation_midpiece: list,
-) -> tuple[list[float], float]:
+) -> Tuple[List[float], float]:
     max_x = float("-inf")
     max_y = float("-inf")
     min_x = float("inf")
@@ -256,7 +257,7 @@ def prepare_annotation(
         json.dump(annotations_file, fp=f)
 
 
-def prepare_image(src: Path, dest: Path) -> tuple[float, float]:
+def prepare_image(src: Path, dest: Path) -> Tuple[float, float]:
     image = cv2.imread(str(src))
     final_image, width_scale, height_scale = post_processing(image)
     cv2.imwrite(str(dest), final_image)
