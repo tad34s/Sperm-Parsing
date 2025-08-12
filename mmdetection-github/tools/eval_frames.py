@@ -99,8 +99,8 @@ def sliding_window(image, window_size, stride):
 
 def eval_frame(model, frame_path: Path) -> List[Bbox]:
     frame = cv2.imread(str(frame_path))
-    height = 135
-    width = 135
+    height = 200
+    width = 200
     stride = 50
     windows = sliding_window(image=frame, window_size=(height, width), stride=stride)
 
@@ -124,10 +124,10 @@ def eval_frame(model, frame_path: Path) -> List[Bbox]:
 
             output_bboxes.append(
                 Bbox(
-                    x + int(x1) * width_scale,
-                    x + int(x2) * width_scale,
-                    y + int(y1) * height_scale,
-                    y + int(y2) * height_scale,
+                    x + int(x1) / width_scale,
+                    x + int(x2) / width_scale,
+                    y + int(y1) / height_scale,
+                    y + int(y2) / height_scale,
                 )
             )
 
