@@ -8,8 +8,7 @@ import numpy as np
 import torch
 from cv2.typing import MatLike
 from mmdet.apis import inference_detector, init_detector
-
-from .prepare_images import post_processing
+from prepare_images import post_processing
 
 
 @dataclass
