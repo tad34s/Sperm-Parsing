@@ -10,6 +10,7 @@ import torch
 from cv2.typing import MatLike
 from mmdet.apis import inference_detector, init_detector
 from prepare_images import post_processing
+from tqdm import tqdm
 
 
 @dataclass
@@ -98,10 +99,10 @@ def sliding_window(image, window_size, stride):
 
 
 def eval_frame(model, frame_path: Path) -> List[Bbox]:
-    height = 350
-    width = 350
-    stride = 100
     frame = cv2.imread(str(frame_path))
+    height = 150
+    width = 150
+    stride = 50
     windows = sliding_window(image=frame, window_size=(height, width), stride=stride)
 
     output_bboxes = []
@@ -160,10 +161,13 @@ if __name__ == "__main__":
     checkpoint_file = args.checkpoint
 
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
-
     model = init_detector(config_file, checkpoint_file, device=device)
 
-    for frame in frame_location.glob("*.jpg"):
+    frame_path = next(frame_location.glob("*.jpg"))
+    frame = cv2.imread(str(frame_path))
+    print("Image shape: ", frame.shape)
+
+    for frame in tqdm(frame_location.glob("*.jpg")):
         output_frame = outputs_location / frame.name
         bboxes = eval_frame(model, frame)
         bboxes = combine_bboxes(bboxes)
