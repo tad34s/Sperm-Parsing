@@ -156,8 +156,8 @@ if __name__ == "__main__":
     parser.add_argument("--checkpoint", required=True, help="Path to checkpoint file")
 
     args = parser.parse_args()
-    config_file = (args.config,)
-    checkpoint_file = (args.checkpoint,)
+    config_file = args.config
+    checkpoint_file = args.checkpoint
 
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
 
