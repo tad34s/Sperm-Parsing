@@ -154,7 +154,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run object detection inference")
     parser.add_argument("--config", required=True, help="Path to config file")
     parser.add_argument("--checkpoint", required=True, help="Path to checkpoint file")
-    parser.add_argument("--image", required=True, help="Path to input image")
 
     args = parser.parse_args()
     config_file = (args.config,)
