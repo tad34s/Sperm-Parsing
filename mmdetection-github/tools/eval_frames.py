@@ -147,8 +147,8 @@ def vizualize_bboxes(bboxes: List[Bbox], frame: Path) -> MatLike:
 
 
 if __name__ == "__main__":
-    frame_location = Path("dataset/eval/frames")
-    outputs_location = Path("dataset/eval/bboxed_frames")
+    frame_location = Path("data/eval/frames")
+    outputs_location = Path("data/eval/bboxed_frames")
     outputs_location.mkdir(exist_ok=True, parents=True)
 
     parser = argparse.ArgumentParser(description="Run object detection inference")
