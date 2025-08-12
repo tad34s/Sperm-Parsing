@@ -2,6 +2,7 @@ import argparse
 from collections import deque
 from dataclasses import dataclass
 from pathlib import Path
+from typing import List
 
 import cv2
 import numpy as np
@@ -19,7 +20,7 @@ class Bbox:
     y_end: int
 
 
-def combine_bboxes(bboxes: list[Bbox]) -> list[Bbox]:
+def combine_bboxes(bboxes: List[Bbox]) -> List[Bbox]:
     THRESHOLD = 0.5
 
     n = len(bboxes)
@@ -96,7 +97,7 @@ def sliding_window(image, window_size, stride):
             yield (x, y, image[y : y + win_h, x : x + win_w])
 
 
-def eval_frame(model, frame_path: Path) -> list[Bbox]:
+def eval_frame(model, frame_path: Path) -> List[Bbox]:
     height = 350
     width = 350
     stride = 100
@@ -132,7 +133,7 @@ def eval_frame(model, frame_path: Path) -> list[Bbox]:
     return output_bboxes
 
 
-def vizualize_bboxes(bboxes: list[Bbox], frame: Path) -> MatLike:
+def vizualize_bboxes(bboxes: List[Bbox], frame: Path) -> MatLike:
     img = cv2.imread(str(frame))
     for box in bboxes:
         cv2.rectangle(
