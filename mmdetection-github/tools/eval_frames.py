@@ -10,7 +10,6 @@ import torch
 from cv2.typing import MatLike
 from mmdet.apis import inference_detector, init_detector
 from prepare_images import post_processing
-from tqdm import tqdm
 
 
 @dataclass
@@ -100,8 +99,8 @@ def sliding_window(image, window_size, stride):
 
 def eval_frame(model, frame_path: Path) -> List[Bbox]:
     frame = cv2.imread(str(frame_path))
-    height = 150
-    width = 150
+    height = 135
+    width = 135
     stride = 50
     windows = sliding_window(image=frame, window_size=(height, width), stride=stride)
 
@@ -167,9 +166,11 @@ if __name__ == "__main__":
     frame = cv2.imread(str(frame_path))
     print("Image shape: ", frame.shape)
 
-    for frame in tqdm(frame_location.glob("*.jpg")):
+    for frame in frame_location.glob("*.jpg"):
+        print(f"Processing frame {frame.name}...")
         output_frame = outputs_location / frame.name
         bboxes = eval_frame(model, frame)
         bboxes = combine_bboxes(bboxes)
+        print(f"Detected {len(bboxes)} bboxes...")
         bboxed_frame = vizualize_bboxes(bboxes, frame)
         cv2.imwrite(str(output_frame), bboxed_frame)
