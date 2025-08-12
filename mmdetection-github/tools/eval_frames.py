@@ -108,7 +108,7 @@ def eval_frame(model, frame_path: Path) -> List[Bbox]:
 
     for x, y, window in windows:
         ready_window, width_scale, height_scale = post_processing(window)
-        result = inference_detector(model, window)
+        result = inference_detector(model, ready_window)
         if isinstance(result, tuple):
             bbox_result, segm_result = result
             if isinstance(segm_result, tuple):
