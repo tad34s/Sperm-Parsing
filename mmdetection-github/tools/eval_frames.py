@@ -108,6 +108,7 @@ def eval_frame(model, frame_path: Path) -> List[Bbox]:
 
     for x, y, window in windows:
         ready_window, width_scale, height_scale = post_processing(window)
+        ready_window = cv2.cvtColor(ready_window, cv2.COLOR_GRAY2BGR)
         result = inference_detector(model, ready_window)
         if isinstance(result, tuple):
             bbox_result, segm_result = result
