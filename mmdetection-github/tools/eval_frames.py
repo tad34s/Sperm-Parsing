@@ -121,7 +121,7 @@ def evaluate_bboxes(
     }
 
 
-def load_ground_truth_dataset(xml_path: Path) -> list[Bbox]:
+def load_ground_truth_dataset(xml_path: Path) -> List[Bbox]:
     tree = ET.parse(xml_path)
     root = tree.getroot()
 
