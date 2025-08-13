@@ -290,7 +290,7 @@ if __name__ == "__main__":
         output_frame = outputs_location / frame.name
         bboxes = eval_frame(model, frame)
         bboxes = combine_bboxes(bboxes)
-        frame_name = frame.name.removesuffix(".jpg")[-4:]
+        frame_name = frame.name[-4:]  # remove .jpg
         ground_truth_xml = frame_location / f"{frame_name}.xml"
         if ground_truth_xml.exists():
             ground_truth = load_ground_truth_dataset(ground_truth_xml)
