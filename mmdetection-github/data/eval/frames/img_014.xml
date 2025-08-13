@@ -1,7 +1,7 @@
 <annotation verified="yes">
 	<folder>frames</folder>
-	<filename>img_010.jpg</filename>
-	<path>/home/tadeas/staz/sperm_analasis/Sperm-Parsing/mmdetection-github/data/eval/frames/img_010.jpg</path>
+	<filename>img_014.jpg</filename>
+	<path>/home/tadeas/staz/sperm_analasis/Sperm-Parsing/mmdetection-github/data/eval/frames/img_014.jpg</path>
 	<source>
 		<database>Unknown</database>
 	</source>
@@ -329,10 +329,10 @@
 		<truncated>0</truncated>
 		<difficult>0</difficult>
 		<bndbox>
-			<xmin>684</xmin>
-			<ymin>155</ymin>
-			<xmax>704</xmax>
-			<ymax>177</ymax>
+			<xmin>695</xmin>
+			<ymin>134</ymin>
+			<xmax>721</xmax>
+			<ymax>154</ymax>
 		</bndbox>
 	</object>
 	<object>
@@ -825,18 +825,6 @@
 			<ymin>181</ymin>
 			<xmax>929</xmax>
 			<ymax>205</ymax>
-		</bndbox>
-	</object>
-	<object>
-		<name>sperm_cell</name>
-		<pose>Unspecified</pose>
-		<truncated>0</truncated>
-		<difficult>0</difficult>
-		<bndbox>
-			<xmin>890</xmin>
-			<ymin>174</ymin>
-			<xmax>918</xmax>
-			<ymax>199</ymax>
 		</bndbox>
 	</object>
 	<object>
@@ -1662,9 +1650,9 @@
 		<difficult>0</difficult>
 		<bndbox>
 			<xmin>595</xmin>
-			<ymin>482</ymin>
+			<ymin>470</ymin>
 			<xmax>616</xmax>
-			<ymax>519</ymax>
+			<ymax>507</ymax>
 		</bndbox>
 	</object>
 	<object>
@@ -1737,18 +1725,6 @@
 			<ymin>611</ymin>
 			<xmax>337</xmax>
 			<ymax>629</ymax>
-		</bndbox>
-	</object>
-	<object>
-		<name>sperm_cell</name>
-		<pose>Unspecified</pose>
-		<truncated>0</truncated>
-		<difficult>0</difficult>
-		<bndbox>
-			<xmin>282</xmin>
-			<ymin>629</ymin>
-			<xmax>310</xmax>
-			<ymax>651</ymax>
 		</bndbox>
 	</object>
 	<object>
@@ -2261,10 +2237,10 @@
 		<truncated>0</truncated>
 		<difficult>0</difficult>
 		<bndbox>
-			<xmin>664</xmin>
-			<ymin>674</ymin>
-			<xmax>678</xmax>
-			<ymax>712</ymax>
+			<xmin>665</xmin>
+			<ymin>683</ymin>
+			<xmax>688</xmax>
+			<ymax>722</ymax>
 		</bndbox>
 	</object>
 	<object>
@@ -2309,10 +2285,10 @@
 		<truncated>0</truncated>
 		<difficult>0</difficult>
 		<bndbox>
-			<xmin>687</xmin>
-			<ymin>767</ymin>
-			<xmax>734</xmax>
-			<ymax>786</ymax>
+			<xmin>691</xmin>
+			<ymin>764</ymin>
+			<xmax>738</xmax>
+			<ymax>783</ymax>
 		</bndbox>
 	</object>
 	<object>
@@ -2421,18 +2397,6 @@
 			<ymin>779</ymin>
 			<xmax>879</xmax>
 			<ymax>815</ymax>
-		</bndbox>
-	</object>
-	<object>
-		<name>sperm_cell</name>
-		<pose>Unspecified</pose>
-		<truncated>0</truncated>
-		<difficult>0</difficult>
-		<bndbox>
-			<xmin>890</xmin>
-			<ymin>767</ymin>
-			<xmax>923</xmax>
-			<ymax>778</ymax>
 		</bndbox>
 	</object>
 	<object>
@@ -3042,9 +3006,9 @@
 		<difficult>0</difficult>
 		<bndbox>
 			<xmin>836</xmin>
-			<ymin>1008</ymin>
-			<xmax>882</xmax>
-			<ymax>1038</ymax>
+			<ymin>1012</ymin>
+			<xmax>880</xmax>
+			<ymax>1041</ymax>
 		</bndbox>
 	</object>
 	<object>
@@ -3173,10 +3137,10 @@
 		<truncated>0</truncated>
 		<difficult>0</difficult>
 		<bndbox>
-			<xmin>552</xmin>
-			<ymin>545</ymin>
-			<xmax>581</xmax>
-			<ymax>573</ymax>
+			<xmin>811</xmin>
+			<ymin>299</ymin>
+			<xmax>833</xmax>
+			<ymax>324</ymax>
 		</bndbox>
 	</object>
 	<object>
@@ -3185,10 +3149,10 @@
 		<truncated>0</truncated>
 		<difficult>0</difficult>
 		<bndbox>
-			<xmin>581</xmin>
-			<ymin>552</ymin>
-			<xmax>606</xmax>
-			<ymax>573</ymax>
+			<xmin>577</xmin>
+			<ymin>548</ymin>
+			<xmax>604</xmax>
+			<ymax>575</ymax>
 		</bndbox>
 	</object>
 	<object>
@@ -3197,10 +3161,34 @@
 		<truncated>0</truncated>
 		<difficult>0</difficult>
 		<bndbox>
-			<xmin>946</xmin>
-			<ymin>469</ymin>
-			<xmax>1009</xmax>
-			<ymax>482</ymax>
+			<xmin>553</xmin>
+			<ymin>521</ymin>
+			<xmax>582</xmax>
+			<ymax>546</ymax>
+		</bndbox>
+	</object>
+	<object>
+		<name>sperm_cell</name>
+		<pose>Unspecified</pose>
+		<truncated>0</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>939</xmin>
+			<ymin>467</ymin>
+			<xmax>1000</xmax>
+			<ymax>483</ymax>
+		</bndbox>
+	</object>
+	<object>
+		<name>sperm_cell</name>
+		<pose>Unspecified</pose>
+		<truncated>0</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>159</xmin>
+			<ymin>69</ymin>
+			<xmax>197</xmax>
+			<ymax>83</ymax>
 		</bndbox>
 	</object>
 </annotation>
