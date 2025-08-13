@@ -298,6 +298,8 @@ if __name__ == "__main__":
             print(f"Metrics for {frame_name}")
             print(values)
             print("------------------------")
+        else:
+            print(f"{str(ground_truth_xml)} does not exists.")
 
         print(f"Detected {len(bboxes)} bboxes...")
         bboxed_frame = vizualize_bboxes(bboxes, frame)
