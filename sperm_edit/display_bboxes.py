@@ -3,17 +3,17 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # Load the image
-image = cv2.imread("example.jpg")  # Load image
+image = cv2.imread("sperm_edit/example.jpg")  # Load image
 image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)  # Convert to RGB
 
 
-new_height = 350
-original_height, original_width = image.shape[:2]
-aspect_ratio = original_width / original_height
-new_width = int(new_height * aspect_ratio)
-image = cv2.resize(image, (new_width, new_height), interpolation=cv2.INTER_AREA)
+# new_height = 350
+# original_height, original_width = image.shape[:2]
+# aspect_ratio = original_width / original_height
+# new_width = int(new_height * aspect_ratio)
+# image = cv2.resize(image, (new_width, new_height), interpolation=cv2.INTER_AREA)
 # Load bounding boxes from .pt file
-bboxes = np.load("bboxes.npy")  # Load tensor
+bboxes = np.load("sperm_edit/bboxes.npy")  # Load tensor
 
 # Print box info for verification
 print(f"Loaded {len(bboxes)} bounding boxes")

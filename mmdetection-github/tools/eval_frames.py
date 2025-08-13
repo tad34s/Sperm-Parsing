@@ -1,8 +1,9 @@
 import argparse
+import xml.etree.ElementTree as ET
 from collections import deque
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List
+from typing import Dict, List, Tuple
 
 import cv2
 import numpy as np
@@ -18,6 +19,123 @@ class Bbox:
     x_end: int
     y_start: int
     y_end: int
+
+
+def compute_iou(bbox1: Bbox, bbox2: Bbox) -> float:
+    """Compute the Intersection over Union (IoU) of two bounding boxes."""
+    # Calculate intersection coordinates
+    inter_x1 = max(bbox1.x_start, bbox2.x_start)
+    inter_y1 = max(bbox1.y_start, bbox2.y_start)
+    inter_x2 = min(bbox1.x_end, bbox2.x_end)
+    inter_y2 = min(bbox1.y_end, bbox2.y_end)
+
+    # Calculate intersection area
+    inter_width = max(0, inter_x2 - inter_x1)
+    inter_height = max(0, inter_y2 - inter_y1)
+    inter_area = inter_width * inter_height
+
+    # Calculate individual areas
+    area1 = (bbox1.x_end - bbox1.x_start) * (bbox1.y_end - bbox1.y_start)
+    area2 = (bbox2.x_end - bbox2.x_start) * (bbox2.y_end - bbox2.y_start)
+
+    # Calculate union area
+    union_area = area1 + area2 - inter_area
+
+    # Avoid division by zero
+    if union_area == 0:
+        return 0.0
+    return inter_area / union_area
+
+
+def evaluate_bboxes(
+    gt_bboxes: List[Bbox], det_bboxes: List[Bbox], iou_threshold: float = 0.5
+) -> Dict[str, float]:
+    """
+    Evaluate detection accuracy using multiple metrics.
+
+    Args:
+        gt_bboxes: List of ground truth bounding boxes
+        det_bboxes: List of detected bounding boxes
+        iou_threshold: Minimum IoU to consider a match (default=0.5)
+
+    Returns:
+        Dictionary containing:
+        - 'true_positives': Number of correctly matched detections
+        - 'false_positives': Number of incorrect detections
+        - 'false_negatives': Number of missed ground truths
+        - 'precision': Precision score (TP / (TP + FP))
+        - 'recall': Recall score (TP / (TP + FN))
+        - 'f1_score': F1 score (harmonic mean of precision and recall)
+        - 'average_iou': Average IoU of matched pairs
+    """
+    # Initialize counters and lists
+    matches: List[Tuple[int, int, float]] = []
+    matched_gts = set()
+    matched_dets = set()
+
+    # Find all potential matches above IoU threshold
+    potential_matches = []
+    for i, gt_bbox in enumerate(gt_bboxes):
+        for j, det_bbox in enumerate(det_bboxes):
+            iou = compute_iou(gt_bbox, det_bbox)
+            if iou >= iou_threshold:
+                potential_matches.append((i, j, iou))
+
+    # Sort matches by IoU in descending order
+    potential_matches.sort(key=lambda x: x[2], reverse=True)
+
+    # Perform greedy matching (highest IoU first)
+    for i, j, iou in potential_matches:
+        if i not in matched_gts and j not in matched_dets:
+            matched_gts.add(i)
+            matched_dets.add(j)
+            matches.append((i, j, iou))
+
+    # Calculate metrics
+    TP = len(matches)
+    FP = len(det_bboxes) - TP
+    FN = len(gt_bboxes) - TP
+
+    # Handle edge cases for precision and recall
+    precision = TP / (TP + FP) if (TP + FP) > 0 else 1.0
+    recall = TP / (TP + FN) if (TP + FN) > 0 else 1.0
+
+    # Calculate F1 score
+    f1_score = 0.0
+    if precision + recall > 0:
+        f1_score = 2 * (precision * recall) / (precision + recall)
+
+    # Calculate average IoU for matched pairs
+    avg_iou = 0.0
+    if TP > 0:
+        avg_iou = sum(iou for _, _, iou in matches) / TP
+
+    return {
+        "true_positives": TP,
+        "false_positives": FP,
+        "false_negatives": FN,
+        "precision": precision,
+        "recall": recall,
+        "f1_score": f1_score,
+        "average_iou": avg_iou,
+    }
+
+
+def load_ground_truth_dataset(xml_path: Path) -> list[Bbox]:
+    tree = ET.parse(xml_path)
+    root = tree.getroot()
+
+    bboxes = []
+    for obj in root.findall("object"):
+        bndbox = obj.find("bndbox")
+        if bndbox is not None:
+            xmin = int(bndbox.find("xmin").text)
+            ymin = int(bndbox.find("ymin").text)
+            xmax = int(bndbox.find("xmax").text)
+            ymax = int(bndbox.find("ymax").text)
+            bboxes.append(Bbox(xmin, xmax, ymin, ymax))
+
+    return bboxes
 
 
 def combine_bboxes(bboxes: List[Bbox]) -> List[Bbox]:
@@ -172,6 +290,15 @@ if __name__ == "__main__":
         output_frame = outputs_location / frame.name
         bboxes = eval_frame(model, frame)
         bboxes = combine_bboxes(bboxes)
+        frame_name = frame.name.removesuffix(".jpg")
+        ground_truth_xml = frame_location / f"{frame_name}.xml"
+        if ground_truth_xml.exists():
+            ground_truth = load_ground_truth_dataset(ground_truth_xml)
+            values = evaluate_bboxes(ground_truth, bboxes)
+            print(f"Metrics for {frame_name}")
+            print(values)
+            print("------------------------")
+
         print(f"Detected {len(bboxes)} bboxes...")
         bboxed_frame = vizualize_bboxes(bboxes, frame)
         cv2.imwrite(str(output_frame), bboxed_frame)
