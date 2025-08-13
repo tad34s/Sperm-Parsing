@@ -292,6 +292,7 @@ if __name__ == "__main__":
         bboxes = combine_bboxes(bboxes)
         frame_name = frame.name[:-4]  # remove .jpg
         ground_truth_xml = frame_location / f"{frame_name}.xml"
+        print(f"Detected {len(bboxes)} bboxes...")
         if ground_truth_xml.exists():
             ground_truth = load_ground_truth_dataset(ground_truth_xml)
             values = evaluate_bboxes(ground_truth, bboxes)
@@ -301,6 +302,5 @@ if __name__ == "__main__":
         else:
             print(f"{str(ground_truth_xml)} does not exists.")
 
-        print(f"Detected {len(bboxes)} bboxes...")
         bboxed_frame = vizualize_bboxes(bboxes, frame)
         cv2.imwrite(str(output_frame), bboxed_frame)
