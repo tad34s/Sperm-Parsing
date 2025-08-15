@@ -1,24 +1,15 @@
 import argparse
-import xml.etree.ElementTree as ET
 from collections import deque
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Tuple
 
 import cv2
 import numpy as np
 import torch
+from __annotated_dataset_fns import Bbox, load_ground_truth_dataset
 from cv2.typing import MatLike
 from mmdet.apis import inference_detector, init_detector
 from prepare_images import post_processing
-
-
-@dataclass
-class Bbox:
-    x_start: int
-    x_end: int
-    y_start: int
-    y_end: int
 
 
 def compute_iou(bbox1: Bbox, bbox2: Bbox) -> float:
@@ -119,23 +110,6 @@ def evaluate_bboxes(
         "f1_score": f1_score,
         "average_iou": avg_iou,
     }
-
-
-def load_ground_truth_dataset(xml_path: Path) -> List[Bbox]:
-    tree = ET.parse(xml_path)
-    root = tree.getroot()
-
-    bboxes = []
-    for obj in root.findall("object"):
-        bndbox = obj.find("bndbox")
-        if bndbox is not None:
-            xmin = int(bndbox.find("xmin").text)
-            ymin = int(bndbox.find("ymin").text)
-            xmax = int(bndbox.find("xmax").text)
-            ymax = int(bndbox.find("ymax").text)
-            bboxes.append(Bbox(xmin, xmax, ymin, ymax))
-
-    return bboxes
 
 
 def combine_bboxes(bboxes: List[Bbox]) -> List[Bbox]:

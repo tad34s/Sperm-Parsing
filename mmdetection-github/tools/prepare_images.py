@@ -4,6 +4,7 @@ from typing import List, Tuple
 
 import cv2
 import numpy as np
+from __annotated_dataset_fns import Bbox, load_ground_truth_dataset
 
 
 def adjust_background_brightness(image, target_bg, percentile=90):
@@ -140,9 +141,7 @@ def block_based_elastic_transform(image, block_size=60, margin=15, alpha=6, sigm
             # Apply weighted blending
             if valid_height > 0 and valid_width > 0:
                 valid_mask = hann[:valid_height, :valid_width]
-                output[y:y_end, x:x_end] += (
-                    inner_block[:valid_height, :valid_width] * valid_mask
-                )
+                output[y:y_end, x:x_end] += inner_block[:valid_height, :valid_width] * valid_mask
                 weights[y:y_end, x:x_end] += valid_mask
 
     # Normalize blended image
@@ -168,13 +167,13 @@ def post_processing(image):
     kernel = np.ones((3, 3))
     image = cv2.dilate(image, kernel)
 
-    image = block_based_elastic_transform(
-        image,
-        block_size=60,  # Optimal for sperm cell sizes
-        margin=20,  # Context margin for natural distortions
-        alpha=40,  # Higher distortion for irregular shapes
-        sigma=4,  # Smooth deformations
-    )
+    # image = block_based_elastic_transform(
+    #     image,
+    #     block_size=60,  # Optimal for sperm cell sizes
+    #     margin=20,  # Context margin for natural distortions
+    #     alpha=40,  # Higher distortion for irregular shapes
+    #     sigma=4,  # Smooth deformations
+    # )
 
     # Add noise (lower intensity for better realism)
     noise = np.random.normal(0, 8, image.shape).astype(np.float32)
@@ -304,9 +303,7 @@ def delete_tail(annotation: dict) -> dict:
     return output
 
 
-def prepare_annotation(
-    annotations_file: dict, dest: Path, scaling_factors: dict
-) -> None:
+def prepare_annotation(annotations_file: dict, dest: Path, scaling_factors: dict) -> None:
     altered_annotations = []
     for annotation in annotations_file["annotations"]:
         no_tail = delete_tail(annotation)
@@ -366,13 +363,195 @@ def prepare_dataset(src_dir: Path, dest_dir: Path) -> None:
     )
 
 
+def sliding_window(image, window_size, stride):
+    """
+    Generator that yields image windows and their coordinates as it slides over the input image.
+
+    Args:
+        image: Input image (numpy array)
+        window_size: Tuple (height, width) of the window dimensions
+        stride: Integer stride (step size) for both horizontal and vertical directions
+    Yields:
+        (x, y, window): Top-left coordinates (x, y) and the image window
+    """
+    win_h, win_w = window_size
+    img_h, img_w = image.shape[:2]
+
+    for y in range(0, img_h - win_h + 1, stride):
+        for x in range(0, img_w - win_w + 1, stride):
+            yield (x, y, image[y : y + win_h, x : x + win_w])
+
+
+def bboxes_in_window(
+    annotated_bboxes: List[Bbox], x: int, y: int, width: int, height: int
+) -> List[Bbox]:
+    """
+    Returns bounding boxes that are completely within the window.
+    Coordinates are adjusted to be relative to the window.
+    """
+    window_bboxes = []
+    window_x_end = x + width
+    window_y_end = y + height
+
+    for bbox in annotated_bboxes:
+        # Check if bbox is fully contained in the window
+        if (
+            x <= bbox.x_start
+            and bbox.x_end <= window_x_end
+            and y <= bbox.y_start
+            and bbox.y_end <= window_y_end
+        ):
+            # Create new Bbox with window-relative coordinates
+            window_bbox = Bbox(
+                x_start=bbox.x_start - x,
+                x_end=bbox.x_end - x,
+                y_start=bbox.y_start - y,
+                y_end=bbox.y_end - y,
+            )
+            window_bboxes.append(window_bbox)
+
+    return window_bboxes
+
+
+def add_annotation(
+    annotations_file: dict,
+    local_bboxes: List[Bbox],
+    width_scale: float,
+    height_scale: float,
+    new_image_id: int,
+    new_image_name: str,
+    new_image_width: int,
+    new_image_height: int,
+):
+    """
+    Adds new annotations to the annotations_file dictionary.
+    Scales bounding boxes and creates new image entry.
+    """
+    # Add new image metadata
+    new_image_entry = {
+        "license": 0,
+        "url": None,
+        "file_name": f"JPEGImages/{new_image_name}",
+        "height": new_image_height,
+        "width": new_image_width,
+        "date_captured": None,
+        "id": new_image_id,
+    }
+    annotations_file["images"].append(new_image_entry)
+
+    # Get next available annotation ID
+    if annotations_file["annotations"]:
+        next_ann_id = max(ann["id"] for ann in annotations_file["annotations"]) + 1
+    else:
+        next_ann_id = 0
+
+    # Add annotations for each bounding box
+    for bbox in local_bboxes:
+        # Convert Bbox to [x, y, width, height] format
+        x = bbox.x_start
+        y = bbox.y_start
+        bbox_width = bbox.x_end - bbox.x_start
+        bbox_height = bbox.y_end - bbox.y_start
+
+        # Scale bounding box coordinates
+        scaled_bbox = [
+            x * width_scale,
+            y * height_scale,
+            bbox_width * width_scale,
+            bbox_height * height_scale,
+        ]
+
+        # Calculate area (width * height)
+        area = scaled_bbox[2] * scaled_bbox[3]
+
+        # Create new annotation entry
+        new_annotation = {
+            "id": next_ann_id,
+            "image_id": new_image_id,
+            "category_id": 1,
+            "segmentation_vacuole": [],
+            "segmentation_acrosome": [],
+            "segmentation_nucleus": [],
+            "segmentation_midpiece": [],
+            "segmentation_tail": [],
+            "area": area,
+            "bbox": scaled_bbox,
+            "iscrowd": 0,
+        }
+        annotations_file["annotations"].append(new_annotation)
+        next_ann_id += 1
+
+
+def add_annotated_data(annotated_data_dir: Path, dest_dir: Path):
+    height = width = stride = 200
+    with (dest_dir / "annotations.json").open("r") as f:
+        annotations_file = json.load(f)
+
+    # Get next available image ID
+    if annotations_file["images"]:
+        next_img_id = max(img["id"] for img in annotations_file["images"]) + 1
+    else:
+        next_img_id = 0
+
+    for frame in annotated_data_dir.glob("*.jpg"):
+        frame_name = frame.name[:-4]  # remove .jpg
+        ground_truth_xml = annotated_data_dir / f"{frame_name}.xml"
+
+        # Skip if XML doesn't exist
+        if not ground_truth_xml.exists():
+            continue
+
+        annotated_bboxes = load_ground_truth_dataset(ground_truth_xml)
+        image = cv2.imread(str(frame))
+        windows = sliding_window(image=image, window_size=(height, width), stride=stride)
+
+        i = 0
+        for x, y, window in windows:
+            local_bboxes = bboxes_in_window(annotated_bboxes, x, y, width, height)
+
+            # Skip windows without annotations
+            if not local_bboxes:
+                continue
+
+            # Process window and get scaling factors
+            final_image, width_scale, height_scale = post_processing(window)
+            new_height, new_width = final_image.shape[:2]
+
+            # Generate new image name
+            new_image_name = f"{frame_name}_{i}.jpg"
+
+            # Add annotations to JSON structure
+            add_annotation(
+                annotations_file=annotations_file,
+                local_bboxes=local_bboxes,
+                width_scale=width_scale,
+                height_scale=height_scale,
+                new_image_id=next_img_id,
+                new_image_name=new_image_name,
+                new_image_width=new_width,
+                new_image_height=new_height,
+            )
+
+            # Save processed image
+            ready_window = cv2.cvtColor(final_image, cv2.COLOR_GRAY2BGR)
+            cv2.imwrite(str(dest_dir / "JPEGImages" / new_image_name), ready_window)
+
+            # Increment IDs for next window
+            next_img_id += 1
+            i += 1
+
+    # Save updated annotations
+    with (dest_dir / "annotations.json").open("w") as f:
+        json.dump(annotations_file, f)
+
+
 if __name__ == "__main__":
     dest_dir = Path.cwd() / "mmdetection-github" / "data" / "part100x"
     src_dir = Path.cwd() / "mmdetection-github" / "data" / "spermparsing" / "Training"
     prepare_dataset(src_dir, dest_dir)
+    annotated_data_dir = Path.cwd() / "mmdetection-github" / "data" / "eval" / "frames"
+    add_annotated_data(annotated_data_dir, dest_dir)
 
     src_image = Path.cwd() / "mmdetection-github" / "data" / "eval" / "image3.jpg"
-    dest_image = (
-        Path.cwd() / "mmdetection-github" / "data" / "eval" / "edited_image3.jpg"
-    )
+    dest_image = Path.cwd() / "mmdetection-github" / "data" / "eval" / "edited_image3.jpg"
     prepare_image(src_image, dest_image)  # Scaling factors discarded for eval
