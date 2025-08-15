@@ -76,6 +76,109 @@ def adjust_dark_spots(image, threshold=130, factor=0.70):
     return cv2.LUT(image, table)
 
 
+def elastic_transform(image, alpha, sigma, random_state=None):
+    if random_state is None:
+        random_state = np.random.RandomState(None)
+
+    shape = image.shape
+    # Generate random displacement fields
+    dx = random_state.rand(*shape) * 2 - 1
+    dy = random_state.rand(*shape) * 2 - 1
+
+    # Apply Gaussian blur to displacement fields
+    dx = cv2.GaussianBlur(dx, (0, 0), sigma) * alpha
+    dy = cv2.GaussianBlur(dy, (0, 0), sigma) * alpha
+
+    # Create coordinate grid
+    x, y = np.meshgrid(np.arange(shape[1]), np.arange(shape[0]))
+    # Apply displacements
+    map_x = (x + dx).astype(np.float32)
+    map_y = (y + dy).astype(np.float32)
+
+    # Remap image using displacement fields
+    distorted_image = cv2.remap(
+        image,
+        map_x,
+        map_y,
+        interpolation=cv2.INTER_LINEAR,
+        borderMode=cv2.BORDER_CONSTANT,
+        borderValue=255,  # Use white for borders
+    )
+    return distorted_image
+
+
+def block_based_elastic_transform(image, block_size=60, margin=15, alpha=6, sigma=4):
+    """Apply elastic transformation to image blocks with blending"""
+    H, W = image.shape[:2]
+    output = np.zeros_like(image, dtype=np.float32)
+    weights = np.zeros_like(image, dtype=np.float32)
+
+    # Create Hanning window for smooth blending
+    hann = np.outer(np.hanning(block_size), np.hanning(block_size))
+
+    # Pad image to handle border blocks
+    padded = cv2.copyMakeBorder(
+        image, margin, margin, margin, margin, cv2.BORDER_CONSTANT, value=255
+    )
+
+    # Process in sliding window fashion
+    for y in range(0, H, block_size // 2):  # 50% overlap
+        for x in range(0, W, block_size // 2):
+            # Extract block with margin
+            y_start = y
+            x_start = x
+            block = padded[
+                y_start : y_start + block_size + 2 * margin,
+                x_start : x_start + block_size + 2 * margin,
+            ]
+
+            if block.size == 0:
+                continue
+
+            # Apply elastic transformation to block
+            rand_state = np.random.RandomState()
+            dx = rand_state.rand(*block.shape) * 2 - 1
+            dy = rand_state.rand(*block.shape) * 2 - 1
+            dx = cv2.GaussianBlur(dx, (0, 0), sigma) * alpha
+            dy = cv2.GaussianBlur(dy, (0, 0), sigma) * alpha
+
+            X, Y = np.meshgrid(np.arange(block.shape[1]), np.arange(block.shape[0]))
+            map_x = np.clip(X + dx, 0, block.shape[1] - 1).astype(np.float32)
+            map_y = np.clip(Y + dy, 0, block.shape[0] - 1).astype(np.float32)
+
+            distorted_block = cv2.remap(
+                block,
+                map_x,
+                map_y,
+                cv2.INTER_LINEAR,
+                borderMode=cv2.BORDER_CONSTANT,
+                borderValue=255,
+            )
+
+            # Extract inner region (without margin)
+            inner_block = distorted_block[
+                margin : margin + block_size, margin : margin + block_size
+            ]
+
+            # Calculate valid region in output
+            y_end = min(y + block_size, H)
+            x_end = min(x + block_size, W)
+            valid_height = y_end - y
+            valid_width = x_end - x
+
+            # Apply weighted blending
+            if valid_height > 0 and valid_width > 0:
+                valid_mask = hann[:valid_height, :valid_width]
+                output[y:y_end, x:x_end] += (
+                    inner_block[:valid_height, :valid_width] * valid_mask
+                )
+                weights[y:y_end, x:x_end] += valid_mask
+
+    # Normalize blended image
+    output = np.divide(output, weights, out=np.zeros_like(output), where=weights > 0)
+    return output.clip(0, 255).astype(np.uint8)
+
+
 def post_processing(image):
     # resize
     new_height = 350
@@ -83,23 +186,34 @@ def post_processing(image):
     aspect_ratio = original_width / original_height
     new_width = int(new_height * aspect_ratio)
     image = cv2.resize(image, (new_width, new_height), interpolation=cv2.INTER_AREA)
+    width_scale = new_width / original_width
+    height_scale = new_height / original_height
 
     image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     cv2.normalize(image, image, 0, 255, cv2.NORM_MINMAX)
     image = adjust_background_brightness(image, target_bg=255, percentile=5)
     # blur
     image = cv2.GaussianBlur(image, (15, 15), 2.0)
-
     kernel = np.ones((3, 3))
     image = cv2.dilate(image, kernel)
-    image = adjust_dark_spots(image)
 
-    return image
+    image = block_based_elastic_transform(
+        image,
+        block_size=60,  # Optimal for sperm cell sizes
+        margin=20,  # Context margin for natural distortions
+        alpha=40,  # Higher distortion for irregular shapes
+        sigma=4,  # Smooth deformations
+    )
+
+    # Add noise (lower intensity for better realism)
+    noise = np.random.normal(0, 8, image.shape).astype(np.float32)
+    image = np.clip(image.astype(np.float32) + noise, 0, 255).astype(np.uint8)
+    return image, width_scale, height_scale
 
 
 def update_one_image(src: Path, dest: Path) -> None:
     image = cv2.imread(str(src))
-    final_image = post_processing(image)
+    final_image, _, _ = post_processing(image)
     cv2.imwrite(str(dest), final_image)
 
 
@@ -114,18 +228,19 @@ def update_directory(dir_src: Path, dir_dest: Path):
 
 
 if __name__ == "__main__":
-    src_image = Path.cwd() / "example.jpg"
-    dest_dir = Path.cwd() / "result2.jpg"
+    data_location = Path.cwd() / "sperm_edit"
+    src_image = data_location / "example.jpg"
+    dest_dir = data_location / "result2.jpg"
     update_one_image(src_image, dest_dir)
 
-    src_image = Path.cwd() / "image.jpg"
-    dest_dir = Path.cwd() / "result.jpg"
+    src_image = data_location / "image.jpg"
+    dest_dir = data_location / "result.jpg"
     update_one_image(src_image, dest_dir)
 
-    src_image = Path.cwd() / "sperms2.jpg"
-    dest_dir = Path.cwd() / "result3.jpg"
+    src_image = data_location / "sperms2.jpg"
+    dest_dir = data_location / "result3.jpg"
     update_one_image(src_image, dest_dir)
 
-    src_image = Path.cwd() / "sperms3.jpg"
-    dest_dir = Path.cwd() / "result4.jpg"
+    src_image = data_location / "sperms3.jpg"
+    dest_dir = data_location / "result4.jpg"
     update_one_image(src_image, dest_dir)

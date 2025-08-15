@@ -78,30 +78,107 @@ def adjust_dark_spots(image, threshold=130, factor=0.70):
     return cv2.LUT(image, table)
 
 
-def post_processing(image):
-    """Returns processed image and scaling factors (width_scale, height_scale)"""
-    # Capture original dimensions
-    original_height, original_width = image.shape[:2]
+def block_based_elastic_transform(image, block_size=60, margin=15, alpha=6, sigma=4):
+    """Apply elastic transformation to image blocks with blending"""
+    H, W = image.shape[:2]
+    output = np.zeros_like(image, dtype=np.float32)
+    weights = np.zeros_like(image, dtype=np.float32)
 
-    # Calculate new dimensions
+    # Create Hanning window for smooth blending
+    hann = np.outer(np.hanning(block_size), np.hanning(block_size))
+
+    # Pad image to handle border blocks
+    padded = cv2.copyMakeBorder(
+        image, margin, margin, margin, margin, cv2.BORDER_CONSTANT, value=255
+    )
+
+    # Process in sliding window fashion
+    for y in range(0, H, block_size // 2):  # 50% overlap
+        for x in range(0, W, block_size // 2):
+            # Extract block with margin
+            y_start = y
+            x_start = x
+            block = padded[
+                y_start : y_start + block_size + 2 * margin,
+                x_start : x_start + block_size + 2 * margin,
+            ]
+
+            if block.size == 0:
+                continue
+
+            # Apply elastic transformation to block
+            rand_state = np.random.RandomState()
+            dx = rand_state.rand(*block.shape) * 2 - 1
+            dy = rand_state.rand(*block.shape) * 2 - 1
+            dx = cv2.GaussianBlur(dx, (0, 0), sigma) * alpha
+            dy = cv2.GaussianBlur(dy, (0, 0), sigma) * alpha
+
+            X, Y = np.meshgrid(np.arange(block.shape[1]), np.arange(block.shape[0]))
+            map_x = np.clip(X + dx, 0, block.shape[1] - 1).astype(np.float32)
+            map_y = np.clip(Y + dy, 0, block.shape[0] - 1).astype(np.float32)
+
+            distorted_block = cv2.remap(
+                block,
+                map_x,
+                map_y,
+                cv2.INTER_LINEAR,
+                borderMode=cv2.BORDER_CONSTANT,
+                borderValue=255,
+            )
+
+            # Extract inner region (without margin)
+            inner_block = distorted_block[
+                margin : margin + block_size, margin : margin + block_size
+            ]
+
+            # Calculate valid region in output
+            y_end = min(y + block_size, H)
+            x_end = min(x + block_size, W)
+            valid_height = y_end - y
+            valid_width = x_end - x
+
+            # Apply weighted blending
+            if valid_height > 0 and valid_width > 0:
+                valid_mask = hann[:valid_height, :valid_width]
+                output[y:y_end, x:x_end] += (
+                    inner_block[:valid_height, :valid_width] * valid_mask
+                )
+                weights[y:y_end, x:x_end] += valid_mask
+
+    # Normalize blended image
+    output = np.divide(output, weights, out=np.zeros_like(output), where=weights > 0)
+    return output.clip(0, 255).astype(np.uint8)
+
+
+def post_processing(image):
+    # resize
     new_height = 350
+    original_height, original_width = image.shape[:2]
     aspect_ratio = original_width / original_height
     new_width = int(new_height * aspect_ratio)
-
-    # Resize and get scaling factors
     image = cv2.resize(image, (new_width, new_height), interpolation=cv2.INTER_AREA)
     width_scale = new_width / original_width
     height_scale = new_height / original_height
 
-    # Continue with processing pipeline
     image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     cv2.normalize(image, image, 0, 255, cv2.NORM_MINMAX)
     image = adjust_background_brightness(image, target_bg=255, percentile=5)
+    # blur
     image = cv2.GaussianBlur(image, (15, 15), 2.0)
     kernel = np.ones((3, 3))
     image = cv2.dilate(image, kernel)
-    image = adjust_dark_spots(image)
 
+    image = block_based_elastic_transform(
+        image,
+        block_size=60,  # Optimal for sperm cell sizes
+        margin=20,  # Context margin for natural distortions
+        alpha=40,  # Higher distortion for irregular shapes
+        sigma=4,  # Smooth deformations
+    )
+
+    # Add noise (lower intensity for better realism)
+    noise = np.random.normal(0, 8, image.shape).astype(np.float32)
+    image = np.clip(image.astype(np.float32) + noise, 0, 255).astype(np.uint8)
     return image, width_scale, height_scale
 
 
@@ -290,10 +367,12 @@ def prepare_dataset(src_dir: Path, dest_dir: Path) -> None:
 
 
 if __name__ == "__main__":
-    dest_dir = Path.cwd() / "data" / "part100x"
-    src_dir = Path.cwd() / "data" / "spermparsing" / "Training"
+    dest_dir = Path.cwd() / "mmdetection-github" / "data" / "part100x"
+    src_dir = Path.cwd() / "mmdetection-github" / "data" / "spermparsing" / "Training"
     prepare_dataset(src_dir, dest_dir)
 
-    src_image = Path.cwd() / "data" / "eval" / "image3.jpg"
-    dest_image = Path.cwd() / "data" / "eval" / "edited_image3.jpg"
+    src_image = Path.cwd() / "mmdetection-github" / "data" / "eval" / "image3.jpg"
+    dest_image = (
+        Path.cwd() / "mmdetection-github" / "data" / "eval" / "edited_image3.jpg"
+    )
     prepare_image(src_image, dest_image)  # Scaling factors discarded for eval
