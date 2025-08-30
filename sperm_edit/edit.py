@@ -169,9 +169,7 @@ def block_based_elastic_transform(image, block_size=60, margin=15, alpha=6, sigm
             # Apply weighted blending
             if valid_height > 0 and valid_width > 0:
                 valid_mask = hann[:valid_height, :valid_width]
-                output[y:y_end, x:x_end] += (
-                    inner_block[:valid_height, :valid_width] * valid_mask
-                )
+                output[y:y_end, x:x_end] += inner_block[:valid_height, :valid_width] * valid_mask
                 weights[y:y_end, x:x_end] += valid_mask
 
     # Normalize blended image
@@ -197,17 +195,17 @@ def post_processing(image):
     kernel = np.ones((3, 3))
     image = cv2.dilate(image, kernel)
 
-    image = block_based_elastic_transform(
-        image,
-        block_size=60,  # Optimal for sperm cell sizes
-        margin=20,  # Context margin for natural distortions
-        alpha=40,  # Higher distortion for irregular shapes
-        sigma=4,  # Smooth deformations
-    )
+    # image = block_based_elastic_transform(
+    #     image,
+    #     block_size=60,  # Optimal for sperm cell sizes
+    #     margin=20,  # Context margin for natural distortions
+    #     alpha=40,  # Higher distortion for irregular shapes
+    #     sigma=4,  # Smooth deformations
+    # )
 
     # Add noise (lower intensity for better realism)
-    noise = np.random.normal(0, 8, image.shape).astype(np.float32)
-    image = np.clip(image.astype(np.float32) + noise, 0, 255).astype(np.uint8)
+    # noise = np.random.normal(0, 8, image.shape).astype(np.float32)
+    # image = np.clip(image.astype(np.float32) + noise, 0, 255).astype(np.uint8)
     return image, width_scale, height_scale
 
 

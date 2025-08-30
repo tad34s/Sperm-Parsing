@@ -176,8 +176,8 @@ def post_processing(image):
     # )
 
     # Add noise (lower intensity for better realism)
-    noise = np.random.normal(0, 8, image.shape).astype(np.float32)
-    image = np.clip(image.astype(np.float32) + noise, 0, 255).astype(np.uint8)
+    # noise = np.random.normal(0, 8, image.shape).astype(np.float32)
+    # image = np.clip(image.astype(np.float32) + noise, 0, 255).astype(np.uint8)
     return image, width_scale, height_scale
 
 
