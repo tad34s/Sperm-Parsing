@@ -215,6 +215,73 @@ def calculate_average_precision(all_detections, all_ground_truths, iou_threshold
     return compute_ap(recalls, precisions)
 
 
+def calculate_dataset_metrics(all_detections, all_ground_truths, iou_threshold=0.5):
+    """
+    Calculate overall metrics across the entire dataset.
+    Returns: precision, recall, f1_score, average_iou
+    """
+    total_tp = 0
+    total_fp = 0
+    total_fn = 0
+    total_iou = 0
+    num_matches = 0
+
+    for img_id, gt_bboxes in all_ground_truths.items():
+        if img_id not in all_detections:
+            total_fn += len(gt_bboxes)
+            continue
+
+        det_bboxes = all_detections[img_id]
+        matches = []
+        matched_gts = set()
+        matched_dets = set()
+
+        # Find all potential matches above IoU threshold
+        potential_matches = []
+        for i, gt_bbox in enumerate(gt_bboxes):
+            for j, det_bbox in enumerate(det_bboxes):
+                iou = compute_iou(gt_bbox, det_bbox)
+                if iou >= iou_threshold:
+                    potential_matches.append((i, j, iou))
+
+        # Sort matches by IoU in descending order
+        potential_matches.sort(key=lambda x: x[2], reverse=True)
+
+        # Perform greedy matching (highest IoU first)
+        for i, j, iou in potential_matches:
+            if i not in matched_gts and j not in matched_dets:
+                matched_gts.add(i)
+                matched_dets.add(j)
+                matches.append((i, j, iou))
+                total_iou += iou
+                num_matches += 1
+
+        # Update counts
+        TP = len(matches)
+        FP = len(det_bboxes) - TP
+        FN = len(gt_bboxes) - TP
+
+        total_tp += TP
+        total_fp += FP
+        total_fn += FN
+
+    # Calculate metrics
+    precision = total_tp / (total_tp + total_fp) if (total_tp + total_fp) > 0 else 0.0
+    recall = total_tp / (total_tp + total_fn) if (total_tp + total_fn) > 0 else 0.0
+    f1_score = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0.0
+    avg_iou = total_iou / num_matches if num_matches > 0 else 0.0
+
+    return {
+        "precision": precision,
+        "recall": recall,
+        "f1_score": f1_score,
+        "average_iou": avg_iou,
+        "true_positives": total_tp,
+        "false_positives": total_fp,
+        "false_negatives": total_fn,
+    }
+
+
 def visualize_bboxes(bboxes: List[DetectedBbox], frame: Path) -> MatLike:
     img = cv2.imread(str(frame))
     for box in bboxes:
@@ -243,6 +310,7 @@ def main():
 
     all_detections = {}
     all_ground_truths = {}
+    per_image_metrics = {}
 
     for frame in frame_location.glob("*.jpg"):
         print(f"Processing frame {frame.name}...")
@@ -256,14 +324,44 @@ def main():
             ground_truth = load_ground_truth_dataset(ground_truth_xml)
             all_ground_truths[frame.stem] = ground_truth
             metrics = evaluate_bboxes(ground_truth, combined_bboxes)
+            per_image_metrics[frame.stem] = metrics
             print(f"Metrics for {frame_name}: {metrics}")
 
         bboxed_frame = visualize_bboxes(combined_bboxes, frame)
         cv2.imwrite(str(outputs_location / frame.name), bboxed_frame)
 
+    # Calculate metrics across the entire dataset
     if all_ground_truths:
+        # Calculate Average Precision
         ap = calculate_average_precision(all_detections, all_ground_truths)
-        print(f"Average Precision: {ap:.4f}")
+        print(f"\nAverage Precision across all images: {ap:.4f}")
+
+        # Calculate other metrics across the dataset
+        dataset_metrics = calculate_dataset_metrics(all_detections, all_ground_truths)
+        print("\nDataset-wide metrics:")
+        print(f"Precision: {dataset_metrics['precision']:.4f}")
+        print(f"Recall: {dataset_metrics['recall']:.4f}")
+        print(f"F1 Score: {dataset_metrics['f1_score']:.4f}")
+        print(f"Average IoU: {dataset_metrics['average_iou']:.4f}")
+        print(f"True Positives: {dataset_metrics['true_positives']}")
+        print(f"False Positives: {dataset_metrics['false_positives']}")
+        print(f"False Negatives: {dataset_metrics['false_negatives']}")
+
+        # Also calculate average of per-image metrics for comparison
+        avg_precision = np.mean([m["precision"] for m in per_image_metrics.values()])
+        avg_recall = np.mean([m["recall"] for m in per_image_metrics.values()])
+        avg_f1 = np.mean([m["f1_score"] for m in per_image_metrics.values()])
+        avg_iou = np.mean(
+            [m["average_iou"] for m in per_image_metrics.values() if m["average_iou"] > 0]
+        )
+
+        print("\nAverage of per-image metrics:")
+        print(f"Precision: {avg_precision:.4f}")
+        print(f"Recall: {avg_recall:.4f}")
+        print(f"F1 Score: {avg_f1:.4f}")
+        print(f"Average IoU: {avg_iou:.4f}")
+    else:
+        print("No ground truth data found for evaluation.")
 
 
 if __name__ == "__main__":
