@@ -7,6 +7,7 @@ import cv2
 import numpy as np
 import torch
 from __annotated_dataset_fns import Bbox, load_ground_truth_dataset
+from cv2.typing import MatLike
 from mmdet.apis import inference_detector, init_detector
 from prepare_images import post_processing
 
@@ -214,7 +215,7 @@ def calculate_average_precision(all_detections, all_ground_truths, iou_threshold
     return compute_ap(recalls, precisions)
 
 
-def vizualize_bboxes(bboxes: List[Bbox], frame: Path) -> MatLike:
+def visualize_bboxes(bboxes: List[DetectedBbox], frame: Path) -> MatLike:
     img = cv2.imread(str(frame))
     for box in bboxes:
         cv2.rectangle(
@@ -257,7 +258,7 @@ def main():
             metrics = evaluate_bboxes(ground_truth, combined_bboxes)
             print(f"Metrics for {frame_name}: {metrics}")
 
-        bboxed_frame = vizualize_bboxes(combined_bboxes, frame)
+        bboxed_frame = visualize_bboxes(combined_bboxes, frame)
         cv2.imwrite(str(outputs_location / frame.name), bboxed_frame)
 
     if all_ground_truths:
