@@ -214,6 +214,19 @@ def calculate_average_precision(all_detections, all_ground_truths, iou_threshold
     return compute_ap(recalls, precisions)
 
 
+def vizualize_bboxes(bboxes: List[Bbox], frame: Path) -> MatLike:
+    img = cv2.imread(str(frame))
+    for box in bboxes:
+        cv2.rectangle(
+            img,
+            (int(box.x_start), int(box.y_start)),
+            (int(box.x_end), int(box.y_end)),
+            color=(255, 0, 0),  # Red in RGB
+            thickness=2,
+        )
+    return img
+
+
 def main():
     parser = argparse.ArgumentParser(description="Run object detection inference")
     parser.add_argument("--config", required=True, help="Path to config file")
