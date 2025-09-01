@@ -549,7 +549,7 @@ if __name__ == "__main__":
     dest_dir = Path.cwd() / "mmdetection-github" / "data" / "part100x"
     src_dir = Path.cwd() / "mmdetection-github" / "data" / "spermparsing" / "Training"
     prepare_dataset(src_dir, dest_dir)
-    annotated_data_dir = Path.cwd() / "mmdetection-github" / "data" / "eval" / "frames"
+    annotated_data_dir = Path.cwd() / "mmdetection-github" / "data" / "eval" / "frames_1"
     add_annotated_data(annotated_data_dir, dest_dir)
 
     src_image = Path.cwd() / "mmdetection-github" / "data" / "eval" / "image3.jpg"
