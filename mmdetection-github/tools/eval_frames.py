@@ -341,7 +341,8 @@ def process_video(model, video_path, output_dir):
     # Cleanup
     cap.release()
     out.release()
-    temp_path.unlink(missing_ok=True)  # Remove temporary frame
+    if temp_path.exists():
+        temp_path.unlink()
     print(f"Finished processing {video_path.name}. Saved to {output_path}")
 
 
