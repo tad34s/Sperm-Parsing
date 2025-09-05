@@ -295,6 +295,56 @@ def visualize_bboxes(bboxes: List[DetectedBbox], frame: Path) -> MatLike:
     return img
 
 
+def process_video(model, video_path, output_dir):
+    """Process a video file and save with bounding boxes"""
+    cap = cv2.VideoCapture(str(video_path))
+    if not cap.isOpened():
+        print(f"Error opening video: {video_path}")
+        return
+
+    # Get video properties
+    fps = int(cap.get(cv2.CAP_PROP_FPS))
+    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+    # Create output video writer
+    output_path = output_dir / f"{video_path.stem}_bboxed.mp4"
+    fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+    out = cv2.VideoWriter(str(output_path), fourcc, fps, (width, height))
+
+    temp_path = Path("temp_frame.jpg")
+    frame_count = 0
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            break
+
+        # Convert BGR to RGB
+        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+        # Save temporary frame for processing
+        cv2.imwrite(str(temp_path), frame_rgb)
+
+        # Process frame
+        detected_bboxes = eval_frame(model, temp_path)
+        combined_bboxes = combine_bboxes(detected_bboxes)
+
+        # Visualize and write frame
+        bboxed_frame = visualize_bboxes(combined_bboxes, temp_path)
+        bboxed_frame_bgr = cv2.cvtColor(bboxed_frame, cv2.COLOR_RGB2BGR)
+        out.write(bboxed_frame_bgr)
+
+        frame_count += 1
+        if frame_count % 30 == 0:
+            print(f"Processed {frame_count} frames...")
+
+    # Cleanup
+    cap.release()
+    out.release()
+    temp_path.unlink(missing_ok=True)  # Remove temporary frame
+    print(f"Finished processing {video_path.name}. Saved to {output_path}")
+
+
 def main():
     parser = argparse.ArgumentParser(description="Run object detection inference")
     parser.add_argument("--config", required=True, help="Path to config file")
@@ -329,6 +379,14 @@ def main():
 
         bboxed_frame = visualize_bboxes(combined_bboxes, frame)
         cv2.imwrite(str(outputs_location / frame.name), bboxed_frame)
+
+    video_location = Path("data/eval/videos")
+    output_video_location = Path("data/eval/bboxed_videos")
+    output_video_location.mkdir(exist_ok=True, parents=True)
+
+    for video_path in video_location.glob("*.mov"):
+        print(f"Processing video: {video_path.name}")
+        process_video(model, video_path, output_video_location)
 
     # Calculate metrics across the entire dataset
     if all_ground_truths:
