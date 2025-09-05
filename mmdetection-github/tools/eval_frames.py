@@ -354,6 +354,7 @@ def main():
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
     model = init_detector(args.config, args.checkpoint, device=device)
 
+    print("Model loaded")
     frame_location = Path("data/eval/frames")
     outputs_location = Path("data/eval/bboxed_frames")
     outputs_location.mkdir(exist_ok=True, parents=True)
